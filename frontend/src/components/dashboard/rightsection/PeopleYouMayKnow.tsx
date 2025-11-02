@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { LoaderCircleIcon } from "lucide-react";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button"; 
 import usePop from "@/hooks/usePop";
 
 export default function PeopleYouMayKnow({

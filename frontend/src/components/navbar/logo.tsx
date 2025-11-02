@@ -1,5 +1,5 @@
-import logo from "../assets/logo/xlogo.png"
-import logo2 from "../assets/logo/purpletext.png"
+import logo from "../../assets/logo/xlogo.png"
+import logo2 from "../../assets/logo/purpletext.png"
 
 export default function Logo() {
 

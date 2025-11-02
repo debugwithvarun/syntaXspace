@@ -1,9 +1,9 @@
 import { useId } from "react"
 import { SearchIcon } from "lucide-react"
 
-import Logo from "@/components/logo"
-import NotificationMenu from "@/components/notification-menu"
-import UserMenu from "@/components/user-menu"
+import Logo from "@/components/navbar/logo"
+import NotificationMenu from "@/components/navbar/notification-menu"
+import UserMenu from "@/components/navbar/user-menu"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {

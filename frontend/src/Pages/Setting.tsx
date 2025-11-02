@@ -1,6 +1,6 @@
 // import Navbar from "@/components/Navbar"
-import VerifyEmail from "@/components/VerifyEmail"
-import NewNavbar from "@/components/NewNavbar"
+import VerifyEmail from "@/components/navbar/VerifyEmail"
+import NewNavbar from "@/components/navbar/NewNavbar"
 import SettingInner from "@/components/settings/SettingInner";
 
 

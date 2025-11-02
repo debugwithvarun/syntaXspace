@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
-import SignupSchema from "../Schema/SignupSchema";
+import SignupSchema from "../../Schema/SignupSchema";
 import usePop from "@/hooks/usePop";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";

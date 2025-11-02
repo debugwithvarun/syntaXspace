@@ -2,15 +2,16 @@ import { Route, Routes } from "react-router-dom"
 import Authentication from "./Pages/Authentication"
 import PrivateRoute from "./Routes/PrivateRoute"
 
-import Logout from "./components/Logout"
+
 import AppDashboard from "./Pages/AppDashboard"
 // import { useEffect, useState } from "react"
-import ErrorPopUp from "./components/errorPopUp"
-import SuccessPopUp from "./components/sucessPopUp"
-import WarningPopUp from "./components/warningPopUp"
+import ErrorPopUp from "./components/popup/errorPopUp"
+import SuccessPopUp from "./components/popup/sucessPopUp"
+import WarningPopUp from "./components/popup/warningPopUp"
 import usePop from "./hooks/usePop"
 import NetworkDashbaord from "./Pages/NetworkDashbaord"
 import Setting from "./Pages/Setting"
+import Logout from "./components/login/Logout"
 
 
 const App = () => {

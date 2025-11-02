@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { Card } from './ui/card'
+import { Card } from '@/components/ui/card';
 
-import PeopleYouMayKnow from './PeopleYouMayKnow'
-import { ScrollArea } from './ui/scroll-area';
+import PeopleYouMayKnow from './PeopleYouMayKnow';
+import { ScrollArea } from '@/components/ui/scroll-area'; 
 type UserField = {
     name: string;
     username: string;
