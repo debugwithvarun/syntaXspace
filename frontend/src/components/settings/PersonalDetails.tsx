@@ -87,6 +87,7 @@ const PersonalDetails = () => {
                 Save Changes
               </Button>
             </div>
+            
           </form>
         </ScrollArea>
       </div>
