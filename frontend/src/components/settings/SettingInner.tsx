@@ -9,6 +9,8 @@ import {
 import { Separator } from "../ui/separator"
 import EditProfile from "./EditProfile"
 import PersonalDetails from "./PersonalDetails"
+import PasswordSecurity from "./PasswordSecurity"
+import Block from "./Block"
 
 
 
@@ -93,8 +95,14 @@ export default function SettingInner() {
             <PersonalDetails/>
         </TabsContent>
         <TabsContent value="tab-3">
-         
+          <PasswordSecurity/>
         </TabsContent>
+        <TabsContent value="tab-4">
+          <Block/>
+          
+        </TabsContent>
+
+
       </div>
     </Tabs>
   )
