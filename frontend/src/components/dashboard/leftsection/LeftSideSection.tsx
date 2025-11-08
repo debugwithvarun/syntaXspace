@@ -1,5 +1,6 @@
 
 import { Card } from '../../ui/card'
+import { AddPost } from './AddPost'
 import ProfileTitle from './ProfileTitle'
 
 const LeftSideSection = () => {
@@ -8,6 +9,10 @@ const LeftSideSection = () => {
             <Card className="p-6">
                 <ProfileTitle />
             </Card>
+            <Card className="p-0">
+                <AddPost />
+            </Card>
+
  
         </div>
     )
