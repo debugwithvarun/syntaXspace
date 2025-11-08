@@ -7,6 +7,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [username,setUsername]=useState("")
     const [email,setEmail]=useState("")
     const [name,setName]=useState("")
+    const [profilepic,setProfilePic]=useState("")
+  const API_BASE = "http://localhost:8000";
+
     useEffect(() => {
       const checkAuth = async () => {
         try {
@@ -16,6 +19,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const userInfo=data.userInfo
             console.log(userInfo)
             setUsername(userInfo.username)
+            
+            setProfilePic(`${API_BASE}${userInfo.profilepic}`)
             setEmail(userInfo.email)
             setName(userInfo.name)
             setIsAuth(data.success); 
@@ -30,9 +35,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       };
       checkAuth();
     }, []);
-  
+    console.log(username,profilepic,name)
     return (
-      <AuthContext.Provider value={{ isAuth, loading,setIsAuth,username,email,name,setEmail,setName,setUsername }}>
+      <AuthContext.Provider value={{ isAuth, loading,setIsAuth,username,email,name,setEmail,setName,setUsername ,profilepic,setProfilePic}}>
         {children}
       </AuthContext.Provider>
     );

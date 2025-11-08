@@ -7,9 +7,11 @@ interface AuthContextType {
   setName:React.Dispatch<React.SetStateAction<string>>;
   setUsername:React.Dispatch<React.SetStateAction<string>>;
   setEmail:React.Dispatch<React.SetStateAction<string>>;
+  setProfilePic:React.Dispatch<React.SetStateAction<string>>;
   name:string ;
   username:string ;
   email:string ;
+  profilepic:string
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

@@ -1,76 +1,158 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Camera } from "lucide-react";
+import { ScrollArea } from "../ui/scroll-area";
+import { useAuth } from "@/hooks/useAuth";
+import usePop from "@/hooks/usePop";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Camera } from 'lucide-react';
-import { ScrollArea } from '../ui/scroll-area';
-import { useAuth } from '@/hooks/useAuth';
 
 
 const EditProfile = () => {
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [skillInput, setSkillInput] = useState('');
-  const {username,name}=useAuth() 
-  
-  const [uname,setUname]=useState(username)
-  const [pname,setPname]=useState(name)
-  const [bio,setBio]=useState("")
-  const [skills, setSkills] = useState<string[]>(['React', 'TypeScript', 'Node.js']);
+  const { username, name, profilepic,setProfilePic } = useAuth();
 
+  // ---------- State ----------
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profilePreview, setProfilePreview] = useState<string | null>(
+    profilepic ? `${profilepic}` : null
+  );
+  const [uname, setUname] = useState(username);
+  const [pname, setPname] = useState(name);
+  const [bio, setBio] = useState("");
+  const [skills, setSkills] = useState<string[]>([]);
+  const [skillInput, setSkillInput] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const {setPopUp,setMsg}=usePop()
+
+
+  // ---------- Fetch Profile Data ----------
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch(`api/setting/profile`, {
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error("Failed to fetch profile");
+        const { data } = await res.json();
+
+        setBio(data.bio || "");
+        setSkills(data.skills || []);
+      } catch (error) {
+        setMsg("Something went wrong")
+        setPopUp('de')
+        console.error("Error fetching profile:", error);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  // ---------- Handlers ----------
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setProfileImage(event.target?.result as string);
-      };
-      reader.readAsDataURL(e.target.files[0]);
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfileImage(file);
+      setProfilePreview(URL.createObjectURL(file));
     }
-    
   };
+
   const addSkill = () => {
-    if (skillInput.trim() && !skills.includes(skillInput.trim())) {
-      setSkills([...skills, skillInput.trim()]);
-      setSkillInput('');
+    const skill = skillInput.trim();
+    if (skill && !skills.includes(skill)) {
+      setSkills([...skills, skill]);
+      setSkillInput("");
     }
   };
 
   const removeSkill = (skillToRemove: string) => {
-    setSkills(skills.filter((skill) => skill !== skillToRemove));
+    setSkills(skills.filter((s) => s !== skillToRemove));
   };
 
-const handleSubmit=()=>{
-    console.log(uname)
-    console.log(pname)
-    console.log(bio)
-    console.log(skills)
-}
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append("name", pname);
+      formData.append("username", uname);
+      formData.append("bio", bio);
+      formData.append("skills", JSON.stringify(skills));
+      if (profileImage) {
+        formData.append("profilepic", profileImage);
+      }
+
+      const res = await fetch(`api/setting/profile`, {
+        method: "PUT",
+        body: formData,
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        // console.log("✅ Profile updated:", data);
+        setProfilePic(data.profile)
+        setMsg("Profile updated successfully!");
+        setPopUp("ds")
+
+        if (data.profilepic){ 
+          setProfilePreview(`${data.profilepic}`);
+        }
+      } else {
+        setMsg("Profile Update failed")
+        setPopUp("dw")
+        // console.error("❌ Update failed:", data);
+        // alert(data.msg || "Profile update failed");
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      setMsg("Something went wrong while updating your profile.");
+      setPopUp("de")
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ---------- Render ----------
   return (
     <div className="h-[90vh] w-full flex justify-center items-start">
-      <div className="w-full max-w-4xl rounded-xl ">
-        <ScrollArea className="h-[70vh] lg:h-[80vh] ">
-          <form className="space-y-6 px-4" onSubmit={(e)=>{
-            e.preventDefault()
-            handleSubmit()
-          }}>
-
+      <div className="w-full max-w-4xl rounded-xl">
+        <ScrollArea className="h-[70vh] lg:h-[80vh]">
+          <form
+            className="space-y-6 px-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
+          >
             {/* Profile Picture Section */}
             <Card>
               <CardHeader>
                 <CardTitle>Profile Picture</CardTitle>
-                <CardDescription>Upload or change your profile photo</CardDescription>
+                <CardDescription>
+                  Upload or change your profile photo
+                </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col sm:flex-row items-center gap-6">
                 <Avatar className="h-32 w-32 border-4 border-border">
-                  <AvatarImage src={profileImage || undefined} />
-                  <AvatarFallback className="text-2xl bg-primary/10">
-                    <Camera className="h-12 w-12 text-muted-foreground" />
-                  </AvatarFallback>
+                  {profilePreview ? (
+                    <AvatarImage src={profilePreview} alt="Profile" />
+                  ) : (
+                    <AvatarFallback className="text-2xl bg-primary/10">
+                      <Camera className="h-12 w-12 text-muted-foreground" />
+                    </AvatarFallback>
+                  )}
                 </Avatar>
+
                 <div className="flex-1 space-y-4">
                   <Label htmlFor="profile-picture" className="cursor-pointer">
                     <div className="flex items-center justify-center sm:justify-start gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors w-fit">
@@ -92,23 +174,33 @@ const handleSubmit=()=>{
               </CardContent>
             </Card>
 
-      
-
             {/* Basic Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Basic Information</CardTitle>
-                <CardDescription>Your public profile information</CardDescription>
+                <CardDescription>
+                  Your public profile information
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="displayName">Display Name</Label>
-                    <Input id="displayName" placeholder="Enter Name" value={pname} onChange={(e)=>setPname(e.target.value)}/>
+                    <Input
+                      id="displayName"
+                      placeholder="Enter Name"
+                      value={pname}
+                      onChange={(e) => setPname(e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="username">Username</Label>
-                    <Input id="username" placeholder="Enter Username" value={uname} onChange={(e)=>setUname(e.target.value)} />
+                    <Input
+                      id="username"
+                      placeholder="Enter Username"
+                      value={uname}
+                      onChange={(e) => setUname(e.target.value)}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -116,9 +208,9 @@ const handleSubmit=()=>{
                   <Textarea
                     id="bio"
                     placeholder="Tell us about yourself..."
-                    value={bio.trim()}
+                    value={bio}
                     className="min-h-[100px] resize-none"
-                    onChange={(e)=>setBio(e.target.value)}
+                    onChange={(e) => setBio(e.target.value)}
                   />
                 </div>
               </CardContent>
@@ -128,7 +220,9 @@ const handleSubmit=()=>{
             <Card>
               <CardHeader>
                 <CardTitle>Technical Skills</CardTitle>
-                <CardDescription>Add tags to showcase your expertise</CardDescription>
+                <CardDescription>
+                  Add tags to showcase your expertise
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
@@ -136,7 +230,9 @@ const handleSubmit=()=>{
                     placeholder="Add a skill (e.g., Python, React)"
                     value={skillInput}
                     onChange={(e) => setSkillInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && (e.preventDefault(), addSkill())
+                    }
                   />
                   <Button type="button" onClick={addSkill}>
                     Add
@@ -153,9 +249,9 @@ const handleSubmit=()=>{
                       {skill}
                       <span
                         onClick={() => removeSkill(skill)}
-                        className="text-sm flex items-center justify-center cursor-pointer hover:text-destructive"
+                        className="text-sm cursor-pointer hover:text-destructive"
                       >
-                        X
+                        ✕
                       </span>
                     </Badge>
                   ))}
@@ -165,11 +261,20 @@ const handleSubmit=()=>{
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-end pt-4 pb-4">
-              <Button type="button" variant="outline" className="w-full sm:w-auto">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                disabled={loading}
+              >
                 Cancel
               </Button>
-              <Button type="submit" className="w-full sm:w-auto">
-                Save Changes
+              <Button
+                type="submit"
+                className="w-full sm:w-auto"
+                disabled={loading}
+              >
+                {loading ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </form>

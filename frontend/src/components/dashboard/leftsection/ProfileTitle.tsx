@@ -1,6 +1,5 @@
 import {
   HoverCard,
-  // HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
 import { useAuth } from "@/hooks/useAuth";
