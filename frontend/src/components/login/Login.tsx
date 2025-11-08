@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import usePop from '@/hooks/usePop';
 
 const Login = () => {
-  const { isAuth, setIsAuth, setEmail, setName, setUsername } = useAuth();
+  const { isAuth, setIsAuth, setEmail, setName, setUsername,setProfilePic } = useAuth();
   const {setMsg,setPopUp}=usePop()
   const navigate = useNavigate();
 
@@ -49,6 +49,7 @@ const Login = () => {
         setUsername(userInfo.username)
         setEmail(userInfo.email)
         setName(userInfo.name)
+        setProfilePic(`http://localhost:8000${userInfo.profilepic}`)
         setIsAuth(true);
       } else {
         const code = await res.json();

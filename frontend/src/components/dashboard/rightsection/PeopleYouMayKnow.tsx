@@ -1,31 +1,32 @@
 import { useEffect, useState } from "react";
 import { LoaderCircleIcon } from "lucide-react";
-import { Button } from "@/components/ui/button"; 
+import { Button } from "@/components/ui/button";
 import usePop from "@/hooks/usePop";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function PeopleYouMayKnow({
   rcmd,
 }: {
-  rcmd: { name: string; username: string };
+  rcmd: { name: string; username: string, profilepic:string };
 }) {
   // 1. already
   // 2. sent
   // 3. idle
   const [status, setStatus] = useState<"idle" | "loading" | "sent" | "already">("idle");
+  
+  useEffect(() => {
+    const getStatus = async (target: string) => {
+      const res = await fetch(`/api/check-status/${target}`)
+      const res_json = await res.json()
+      // console.log("user : ",target," status : ",res_json.status)
 
-  useEffect(()=>{
-    const getStatus=async(target:string)=>{
-        const res=await fetch(`/api/check-status/${target}`)
-        const res_json=await res.json()
-        console.log("user : ",target," status : ",res_json.status)
-        
-        setStatus(res_json.status)
+      setStatus(res_json.status)
     }
     getStatus(rcmd.username)
-  },[rcmd.username])
+  }, [rcmd.username])
   const { setMsg, setPopUp } = usePop()
 
-   const handleRequest = async (data: { target: string }) => {
+  const handleRequest = async (data: { target: string }) => {
     try {
 
       setStatus("loading")
@@ -74,9 +75,11 @@ export default function PeopleYouMayKnow({
   return (
     <div className="w-full flex items-center justify-between py-2">
       <div className="flex items-center gap-3 px-4 pr-12">
-        <div className="w-[33px] h-[33px] bg-secondary aspect-square rounded-full flex justify-center items-center text-white font-semibold">
-          {FallbackText(rcmd.name)}
-        </div>
+        <Avatar>
+          <AvatarImage src={`http://localhost:8000${rcmd.profilepic}`} alt="Profile image" />
+          <AvatarFallback>{FallbackText(rcmd.name)}</AvatarFallback>
+        </Avatar>
+ 
 
         <div className="space-y-0.5">
           <p>

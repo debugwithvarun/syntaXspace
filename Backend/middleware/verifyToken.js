@@ -8,6 +8,7 @@ function verifyToken(req, res, next) {
     try {
         const decoded = jwt.verify(token, process.env.SECRET);
         req.data = decoded
+        // console.log(decoded)
         next();
     } catch {
         return res.status(401).json({ error: "Invalid or Expired Token" })

@@ -6,13 +6,12 @@ import cookieParser from 'cookie-parser'
 import Authrouter from './routes/Auth.js'
 import verifyToken from './middleware/verifyToken.js'
 import Rcmdrouter from './routes/Rcmd.js'
-
+import cors from "cors"
 import Networkrouter from './routes/Network.js'
 import { DirectNewsFetching, scheduleNewsFetching } from './routes/News.js'
 import NewsRouter from './routes/News.js'
-
-
-
+import path from "path";
+import { fileURLToPath } from "url";
 
 
 // import User from './models/User.js'
@@ -31,8 +30,20 @@ import NewsRouter from './routes/News.js'
 dotenv.config();
 
 const app = express();
+
+// ✅ CORS configuration
+app.use(cors({
+  origin: "http://localhost:5173", // your frontend URL
+  credentials: true,               // allow cookies (important!)
+}));
+
 app.use(express.json());
 app.use(cookieParser());
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// ✅ Serve static folder with absolute path
+app.use("/profilepic", express.static(path.join(__dirname, "Public/profilepic")));
 
 // get data from the .env
 const PORT=process.env.PORT;

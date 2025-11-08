@@ -11,6 +11,7 @@ import EditProfile from "./EditProfile"
 import PersonalDetails from "./PersonalDetails"
 import PasswordSecurity from "./PasswordSecurity"
 import Block from "./Block"
+import DeleteAccount from "./DeleteAccount"
 
 
 
@@ -99,6 +100,10 @@ export default function SettingInner() {
         </TabsContent>
         <TabsContent value="tab-4">
           <Block/>
+          
+        </TabsContent>
+        <TabsContent value="tab-5">
+          <DeleteAccount/>
           
         </TabsContent>
 

@@ -6,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 type UserField = {
     name: string;
     username: string;
+    profilepic:string
 };
 const RcmdCard = () => {
 

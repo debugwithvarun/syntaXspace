@@ -29,7 +29,7 @@ import { useState } from "react"
 
 export default function UserMenu() {
   const { setTabValue } = useNetwork()
-  const { username, email, name } = useAuth()
+  const { username, email, name ,profilepic} = useAuth()
   
   // Split the name by space
   const [change, setChange] = useState(true)
@@ -42,7 +42,7 @@ export default function UserMenu() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-auto p-0 hover:bg-transparent dark:hover:bg-transparent">
           <Avatar>
-            <AvatarImage src="/origin/avatar.jpg" alt="Profile image" />
+            <AvatarImage src={profilepic} alt="Profile image" />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
         </Button>
