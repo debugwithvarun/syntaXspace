@@ -12,11 +12,11 @@ Networkrouter.route("/sent-request").put(async (req, res) => {
  
       const target_data = await User.findOne(
         { username: target },
-        { username: 1, name: 1, _id: 0 }
+        { username: 1, name: 1,profilepic:1, _id: 0 }
       );
       const sender_data = await User.findOne(
         { username: username },
-        { username: 1, name: 1, _id: 0 }
+        { username: 1, name: 1,profilepic:1, _id: 0 }
       );
   
  
@@ -177,8 +177,8 @@ Networkrouter.route("/add-receive-request/:username").put(async (req, res) => {
     const targetuser = req.params.username;
 
 
-    const userData=await User.findOne({username:username},{username:1,name:1,_id:0})
-    const targetData=await User.findOne({username:targetuser},{username:1,name:1,_id:0})
+    const userData=await User.findOne({username:username},{username:1,name:1,profilepic:1,_id:0})
+    const targetData=await User.findOne({username:targetuser},{username:1,name:1,profilepic:1,_id:0})
     await Network.updateOne(
       { username: username },
       { $pull: { requsetGet: { username: targetuser } } }

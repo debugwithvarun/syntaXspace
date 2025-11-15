@@ -5,6 +5,7 @@ import * as React from "react"
 import {
     Avatar,
     AvatarFallback,
+    AvatarImage,
     // AvatarImage,
 } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/item"
 import usePop from "@/hooks/usePop"
 import ProfileShimmer from "../Skelton/ProfileShimmer"
+import ImagePath from "@/lib/ImagePath"
 
 // const people = [
 //     {
@@ -70,10 +72,10 @@ import ProfileShimmer from "../Skelton/ProfileShimmer"
 // ]
 
 export function ProfileSent() {
-    const [people, setPeople] = React.useState<{ username: string, name: string, _id: string }[]>([])
+    const [people, setPeople] = React.useState<{ username: string, name: string, _id: string, profilepic: string }[]>([])
     const [loading, setLoading] = React.useState(false)
-    const [change,setChange]=React.useState(false)
-    const {setPopUp,setMsg}=usePop()
+    const [change, setChange] = React.useState(false)
+    const { setPopUp, setMsg } = usePop()
     React.useEffect(() => {
         const GetRequest = async () => {
             setLoading(true);
@@ -106,26 +108,26 @@ export function ProfileSent() {
         return splitName?.map((part: string) => part.charAt(0).toUpperCase()).join("");
     }
 
-    const RemoveSentRequest=async(username:string)=>{
+    const RemoveSentRequest = async (username: string) => {
         try {
-            const res=await fetch(`/api/delete-sent-request/${encodeURIComponent(username)}`,{
+            const res = await fetch(`/api/delete-sent-request/${encodeURIComponent(username)}`, {
                 method: "DELETE",
                 headers: {
-                  "Content-Type": "application/json",
+                    "Content-Type": "application/json",
                 }
             })
-            if(res.ok){
+            if (res.ok) {
 
                 setMsg("Sent Request Remove")
                 setPopUp("ds")
-                setChange((prev)=>!prev)
+                setChange((prev) => !prev)
             }
-            else{
-                const data=await res.json()
+            else {
+                const data = await res.json()
                 setMsg(data.msg)
                 setPopUp("dw")
             }
-            
+
         } catch (error) {
             console.log(error)
             setMsg("Something went wrong")
@@ -135,37 +137,39 @@ export function ProfileSent() {
     return (
         <div className="flex min-h-20 w-full flex-col gap-6">
             <ItemGroup>
-                {loading ? 
-                    <ProfileShimmer/>
-                  
-                 : (
-                   people.length>0? 
-                   (people.map((person, index) => (
-                        <React.Fragment key={person.username}>
-                            <Item>
-                                <ItemMedia>
-                                    <Avatar>
-                                        {/* <AvatarImage src={person.avatar} className="grayscale" /> */}
-                                        <AvatarFallback>{getNameFallback(person.name)}</AvatarFallback>
-                                    </Avatar>
-                                </ItemMedia>
-                                <ItemContent className="gap-1">
-                                    <ItemTitle>{person.name}</ItemTitle>
-                                    <ItemDescription>@{person.username}</ItemDescription>
-                                </ItemContent>
-                                <ItemGroup className="flex gap-2 flex-row">
-                                    <Button variant="destructive" className="rounded-xl "
-                                     onClick={()=>RemoveSentRequest(person.username)}
-                                     >
-                                        cancel
-                                    </Button>
+                {loading ?
+                    <ProfileShimmer />
 
-                                </ItemGroup>
-                            </Item>
-                            {index !== people.length - 1 && <ItemSeparator />}
-                        </React.Fragment>
-                    ))):<h6 className="min-h-18 w-full flex items-center justify-center text-sm ">Explore syntaXspace and sent Invite</h6>
-                )}
+                    : (
+                        people.length > 0 ?
+                            (people.map((person, index) => (
+                                <React.Fragment key={person.username}>
+                                    <Item>
+                                        <ItemMedia>
+                                            <Avatar>
+                                                {/* <AvatarImage src={person.avatar} className="grayscale" /> */}
+                                                <AvatarImage src={`${ImagePath(person.profilepic)}`} alt="profilepic"></AvatarImage>
+
+                                                <AvatarFallback>{getNameFallback(person.name)}</AvatarFallback>
+                                            </Avatar>
+                                        </ItemMedia>
+                                        <ItemContent className="gap-1">
+                                            <ItemTitle>{person.name}</ItemTitle>
+                                            <ItemDescription>@{person.username}</ItemDescription>
+                                        </ItemContent>
+                                        <ItemGroup className="flex gap-2 flex-row">
+                                            <Button variant="destructive" className="rounded-xl "
+                                                onClick={() => RemoveSentRequest(person.username)}
+                                            >
+                                                cancel
+                                            </Button>
+
+                                        </ItemGroup>
+                                    </Item>
+                                    {index !== people.length - 1 && <ItemSeparator />}
+                                </React.Fragment>
+                            ))) : <h6 className="min-h-18 w-full flex items-center justify-center text-sm ">Explore syntaXspace and sent Invite</h6>
+                    )}
             </ItemGroup>
         </div>
     )

@@ -2,6 +2,7 @@ import * as React from "react";
 import {
   Avatar,
   AvatarFallback,
+  AvatarImage,
 } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,13 +19,16 @@ import { Separator } from "../ui/separator";
 import { ScrollArea } from "../ui/scroll-area";
 import ProfileShimmer from "../Skelton/ProfileShimmer";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
+import ImagePath from "@/lib/ImagePath";
 
 const Followers = () => {
-  const [people, setPeople] = React.useState<{ username: string; name: string; _id: string }[]>([]);
+  const [people, setPeople] = React.useState<{ username: string; name: string;profilepic:string, _id: string }[]>([]);
   const [loading, setLoading] = React.useState(false);
   const { setPopUp, setMsg } = usePop();
   //   const [change,setChange]=React.useState(false)
   const [remove, setRemove] = React.useState<string[]>([])
+
+
   React.useEffect(() => {
     const GetRequest = async () => {
       setLoading(true);
@@ -92,8 +96,10 @@ const Followers = () => {
               people.map((person, index) => (
                 <React.Fragment key={person.username}>
                   <Item>
+                  
                     <ItemMedia>
                       <Avatar>
+                        <AvatarImage src={`${ImagePath(person.profilepic)}`} alt="profilepic"></AvatarImage>
                         <AvatarFallback>{getNameFallback(person.name)}</AvatarFallback>
                       </Avatar>
                     </ItemMedia>
