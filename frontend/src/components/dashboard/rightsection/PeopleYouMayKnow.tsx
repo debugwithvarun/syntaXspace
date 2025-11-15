@@ -3,6 +3,7 @@ import { LoaderCircleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import usePop from "@/hooks/usePop";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import ImagePath from "@/lib/ImagePath";
 
 export default function PeopleYouMayKnow({
   rcmd,
@@ -76,7 +77,7 @@ export default function PeopleYouMayKnow({
     <div className="w-full flex items-center justify-between py-2">
       <div className="flex items-center gap-3 px-4 pr-12">
         <Avatar>
-          <AvatarImage src={`http://localhost:8000${rcmd.profilepic}`} alt="Profile image" />
+          <AvatarImage src={`${ImagePath(rcmd.profilepic)}`} alt="Profile image" />
           <AvatarFallback>{FallbackText(rcmd.name)}</AvatarFallback>
         </Avatar>
  

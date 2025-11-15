@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import AuthContext from "./AuthContext";
+import ImagePath from "@/lib/ImagePath";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [isAuth, setIsAuth] = useState(false);
@@ -8,7 +9,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [email,setEmail]=useState("")
     const [name,setName]=useState("")
     const [profilepic,setProfilePic]=useState("")
-  const API_BASE = "http://localhost:8000";
+
 
     useEffect(() => {
       const checkAuth = async () => {
@@ -20,7 +21,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.log(userInfo)
             setUsername(userInfo.username)
             
-            setProfilePic(`${API_BASE}${userInfo.profilepic}`)
+            setProfilePic(`${ImagePath(userInfo.profilepic)}`)
             setEmail(userInfo.email)
             setName(userInfo.name)
             setIsAuth(data.success); 

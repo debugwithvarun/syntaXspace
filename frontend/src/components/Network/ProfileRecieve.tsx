@@ -4,6 +4,7 @@ import * as React from "react"
 import {
     Avatar,
     AvatarFallback,
+    AvatarImage,
     // AvatarImage,
 } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/item"
 import usePop from "@/hooks/usePop"
 import ProfileShimmer from "../Skelton/ProfileShimmer"
+import ImagePath from "@/lib/ImagePath"
 
 // const people = [
 //     {
@@ -39,7 +41,7 @@ import ProfileShimmer from "../Skelton/ProfileShimmer"
 // ]
 
 export function ProfileRecieve() {
-        const [people, setPeople] = React.useState<{ username: string, name: string, _id: string }[]>([])
+        const [people, setPeople] = React.useState<{ username: string, name: string, _id: string,profilepic:string }[]>([])
         const [loading, setLoading] = React.useState(false)
     const {setPopUp,setMsg}=usePop()
         const [change,setChange]=React.useState(false)
@@ -139,6 +141,7 @@ export function ProfileRecieve() {
                         <Item>
                             <ItemMedia>
                                 <Avatar>
+                        <AvatarImage src={`${ImagePath(person.profilepic)}`} alt="profilepic"></AvatarImage>
                                     
                                     <AvatarFallback>{getNameFallback(person.name)}</AvatarFallback>
                                 </Avatar>
