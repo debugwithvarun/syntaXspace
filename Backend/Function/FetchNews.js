@@ -12,7 +12,7 @@ export async function fetchTechNews() {
     const desiredMin = 50; 
     let page = 1;
     let allArticles = [];
-  x
+  
     try {
       while (allArticles.length < desiredMin) {
         const url = `${BASE_URL}?q=${query}&lang=en&country=in&max=${maxPerPage}&page=${page}&token=${API_KEY}`;

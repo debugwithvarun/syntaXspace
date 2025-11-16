@@ -17,8 +17,8 @@ import { useIdle } from "@/hooks/useIdle"
 
 
 export default function LanguageButton() {
-  const {setLanguage} =useIdle()
-  const [selectedIndex, setSelectedIndex] = useState("1")
+  const {setLanguage,setLanguageId} =useIdle()
+  const [selectedIndex, setSelectedIndex] = useState("2")
 
   return (
     <div className="inline-flex divide-x divide-primary-foreground/30 rounded-md shadow-xs rtl:space-x-reverse">
@@ -37,7 +37,7 @@ export default function LanguageButton() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          className="max-w-64 md:max-w-xs ml-10"
+          className="max-w-64 md:max-w-xs max-h-[400px] ml-10 overflow-auto scrollbar-none"
           side="bottom"
           sideOffset={4}
           align="end"
@@ -50,6 +50,7 @@ export default function LanguageButton() {
               <DropdownMenuRadioItem
               onClick={()=>{
                 setLanguage(option.id)
+                setLanguageId(option.judge0)
               }}
                 key={option.id}
                 value={String(index)}

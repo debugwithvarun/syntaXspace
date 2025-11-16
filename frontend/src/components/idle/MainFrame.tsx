@@ -7,7 +7,10 @@ import { CodeBox } from "./CodeBox";
 import { Button } from "../ui/button";
 
 const MainFrame = () => {
-    const { setOpen } = useIdle()
+    const { setOpen,postallow } = useIdle()
+    const handleOnPost=()=>{
+        console.log("code post ")
+    }
     return (
         <Card className="bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50  w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 pt-2 shadow-lg duration-200 h-[95%]">
             {/* <img src={xlogo} className='h-9 w-9 absolute right-5 top-5 cursor-pointer'></img> */}
@@ -20,8 +23,8 @@ const MainFrame = () => {
             <CodeBox />
 
             <div className="flex w-full justify-end items-center gap-2 ">
-                <Button variant="ghost">Cancel</Button>
-                <Button>Post</Button>
+                <Button variant="ghost" onClick={()=>setOpen(false)}>Cancel</Button>
+                <Button disabled={!postallow} onClick={handleOnPost}>Post</Button>
             </div>
 
         </Card>
