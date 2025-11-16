@@ -18,6 +18,7 @@ const UserSchema = new mongoose.Schema(
     pronouns: { type: String, default: "" },
     isDeleted: { type: Boolean, default: false },
     deleteRequestedAt: { type: Date, default: null },
+    post:{type:[Schema.Types.ObjectId],default:[]}
   },
   { timestamps: true }
 );

@@ -10,6 +10,9 @@ interface IdleContextType{
     code:string,
     setCode:React.Dispatch<React.SetStateAction<string>>,
     
+    executeTime:string,
+    setExecuteTime:React.Dispatch<React.SetStateAction<string>>,
+    
     language:string,
     setLanguage:React.Dispatch<React.SetStateAction<string>>,
     

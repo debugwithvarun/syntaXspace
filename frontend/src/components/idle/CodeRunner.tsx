@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react'
 import { Spinner } from '../ui/spinner'
 
 const CodeRunner = () => {
-    const { stdin, code, languageId, setStdin, stdout, setStdout, stderr, setStderr, setPostAllow } = useIdle()
+    const { stdin, code, languageId, setStdin, stdout, setStdout, stderr, setStderr, setPostAllow,setExecuteTime } = useIdle()
     const [loading, setLoading] = useState(false)
 
     const [progress, setProgress] = useState(0);
@@ -48,6 +48,7 @@ const CodeRunner = () => {
             console.log(data)
             setStderr(data.stderr)
             setStdout(data.stdout)
+            setExecuteTime(data.time)
             setPostAllow(true)
 
         } catch (error) {
@@ -110,6 +111,7 @@ const CodeRunner = () => {
                                 dark:bg-[#1e1e1e] shadow-none scrollbar-none max-h-full h-full  border ${stderr.trim() !== "" ? "text-destructive" : "text-green-500"}`}
 
                             value={stderr.trim() !== "" ? stderr : stdout}
+                            readOnly
                             placeholder="Output Show Here"
                             name='stdout'
                         />)}

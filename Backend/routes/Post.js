@@ -1,5 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
+import Post from "../models/Post.js";
+import User from "../models/User.js";
 
 dotenv.config();
 
@@ -12,7 +14,7 @@ const judgeapihost = process.env.JUDGEAPIHOST;
 const toBase64 = (s = "") => Buffer.from(s, "utf8").toString("base64");
 const fromBase64 = (b = "") => Buffer.from(b, "base64").toString("utf8");
 
-PostRouter.post("/run-code", async (req, res) => {
+PostRouter.route("/run-code").post(async (req, res) => {
   try {
     // console.log(req.body);
 
@@ -38,14 +40,14 @@ PostRouter.post("/run-code", async (req, res) => {
     const data = await response.json();
 
     const decoded = {
-      token: data.token,
-      status: data.status?.description || "",
+      // token: data.token,
+      // status: data.status?.description || "",
       time: data.time || "",
       stdout: data.stdout ? fromBase64(data.stdout) : "",
       stderr: data.stderr ? fromBase64(data.stderr) : "",
-      compile_output: data.compile_output
-        ? fromBase64(data.compile_output)
-        : "",
+      // compile_output: data.compile_output
+      //   ? fromBase64(data.compile_output)
+      //   : "",
     };
 
     return res.status(200).json(decoded);
@@ -55,4 +57,24 @@ PostRouter.post("/run-code", async (req, res) => {
   }
 });
 
+
+PostRouter.route("/save-post").post(async (req, res) => {
+  try {
+    const { code, language, languageId, stdin, stdout, stderr, time } = req.body;
+    const { username } = req.data;
+    const isError = stderr.trim() === "" ? false : true
+    const NewPost = new Post({ code, language, languageId, stdin, stdout, stderr, time, isError })
+    const savedPost = await NewPost.save()
+
+    await User.updateOne(
+      { username: username },
+      { $push: { post: savedPost._id.toString() } }
+    );
+
+    return res.status(200).json({msg:"Code Post Successfull"})
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({msg:"Internal Server Error"})
+  }
+})
 export default PostRouter;
