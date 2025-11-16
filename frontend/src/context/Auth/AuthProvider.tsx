@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import AuthContext from "./AuthContext";
+import AuthContext from "../Auth/AuthContext";
 import ImagePath from "@/lib/ImagePath";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {

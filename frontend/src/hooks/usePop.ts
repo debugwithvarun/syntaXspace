@@ -1,4 +1,4 @@
-import PopUpContext from "@/context/PopUpContext"
+import PopUpContext from "@/context/PopUp/PopUpContext"
 import { useContext } from "react"
 
 const usePop=()=>{

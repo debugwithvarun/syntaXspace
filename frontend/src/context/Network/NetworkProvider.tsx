@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import NetworkContext from "./NetworkContext";
+import NetworkContext from "../Network/NetworkContext";
 
 
 export const NetworkProvider=({ children }: { children: ReactNode })=>{
