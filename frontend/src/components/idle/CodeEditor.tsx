@@ -9,11 +9,13 @@ import * as monacoEditor from "monaco-editor"
 const CodeEditor = () => {
     
     const {setMsg,setPopUp}=usePop()
-    const {code,language,setCode}=useIdle()
+    const {code,language,setCode,setPostAllow}=useIdle()
+
     const handleOnMount = (editor: monacoEditor.editor.IStandaloneCodeEditor, monaco: typeof monacoEditor) => {
         editor.focus()
         editor.onDidChangeCursorSelection(() => {
             setCode(editor.getValue())
+            setPostAllow(false)
         })
       
         editor.addCommand(

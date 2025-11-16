@@ -12,6 +12,7 @@ import { DirectNewsFetching, scheduleNewsFetching } from './routes/News.js'
 import NewsRouter from './routes/News.js'
 import path from "path";
 import { fileURLToPath } from "url";
+import PostRouter from './routes/Post.js'
 
 
 // import User from './models/User.js'
@@ -56,6 +57,7 @@ app.use("/",verifyToken,Authrouter);
 app.use("/",verifyToken,Rcmdrouter)
 app.use("/",verifyToken,Networkrouter)
 app.use("/",verifyToken,NewsRouter)
+app.use("/syntaxspace",verifyToken,PostRouter)
 
 
 scheduleNewsFetching()
