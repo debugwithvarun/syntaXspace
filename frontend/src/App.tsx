@@ -12,19 +12,26 @@ import usePop from "./hooks/usePop"
 import NetworkDashbaord from "./Pages/NetworkDashbaord"
 import Setting from "./Pages/Setting"
 import Logout from "./components/login/Logout"
+import IdleDashboard from "./Pages/IdleDashboard"
+
+import { useIdle } from "./hooks/useIdle"
 
 
 const App = () => {
  const {popUp,msg} =  usePop()
+ const {open}=useIdle()
   return (
     <>
+   
+    {open&&<IdleDashboard/>}
+  
      <div className="fixed z-10 top-6 right-6">
         {popUp==="e" && <ErrorPopUp msg={msg}/>}
         {popUp==="s" && <SuccessPopUp msg={msg}/>}
         {popUp==="w" && <WarningPopUp msg={msg}/>}
         
       </div>
-     <div className="fixed z-10 bottom-6 left-6">
+     <div className="fixed z-100 bottom-6 left-6">
         {popUp==="de" && <ErrorPopUp msg={msg}/>}
         {popUp==="ds" && <SuccessPopUp msg={msg}/>}
         {popUp==="dw" && <WarningPopUp msg={msg}/>}

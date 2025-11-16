@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import PopUpContext from "./PopUpContext";
+import PopUpContext from "../PopUp/PopUpContext";
 
 const PopUpProvider=({ children }: { children: React.ReactNode })=>{
     const [popUp,setPopUp]=useState("")
