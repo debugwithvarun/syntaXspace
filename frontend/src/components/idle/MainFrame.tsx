@@ -5,10 +5,37 @@ import { useIdle } from "@/hooks/useIdle";
 
 import { CodeBox } from "./CodeBox";
 import { Button } from "../ui/button";
+import usePop from "@/hooks/usePop";
+import PostDialog from "./PostDialog";
 
 const MainFrame = () => {
-    const { setOpen,postallow } = useIdle()
-    const handleOnPost=()=>{
+    const { setOpen, postallow, code, language, languageId, stdin, stdout, stderr, executeTime, title, desc, setTitle, setDesc } = useIdle()
+
+    const { setMsg, setPopUp } = usePop()
+    const handleOnPost = async () => {
+        try {
+            const res = await fetch("/api/syntaxspace/save-post", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    code, language, languageId, stdin, stdout, stderr, time: executeTime, title, description: desc
+                })
+            });
+            if (!res.ok) {
+                setMsg("Something Went Wrong")
+                setPopUp("de")
+            }
+            else {
+                const data = await res.json()
+                setMsg(data.msg)
+                setPopUp("ds")
+                setOpen(false)
+            }
+        } catch (error) {
+            console.log(error)
+        }
         console.log("code post ")
     }
     return (
@@ -23,8 +50,10 @@ const MainFrame = () => {
             <CodeBox />
 
             <div className="flex w-full justify-end items-center gap-2 ">
-                <Button variant="ghost" onClick={()=>setOpen(false)}>Cancel</Button>
-                <Button disabled={!postallow} onClick={handleOnPost}>Post</Button>
+                <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+                <PostDialog handleOnPost={handleOnPost} title={title} setTitle={setTitle} desc={desc} setDesc={setDesc}>
+                    <Button disabled={!postallow} >Next</Button>
+                </PostDialog>
             </div>
 
         </Card>

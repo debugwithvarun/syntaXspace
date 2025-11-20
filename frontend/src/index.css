@@ -27,6 +27,7 @@
 
     --foreground: oklch(0.3211 0 0);
 
+    /* --card: oklch(1.0000 0 0); */
     --card: oklch(1.0000 0 0);
 
     --card-foreground: oklch(0.3211 0 0);

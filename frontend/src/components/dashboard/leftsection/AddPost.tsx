@@ -8,8 +8,10 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
+import { useIdle } from "@/hooks/useIdle"
 
 export function AddPost() {
+  const {setOpen}=useIdle()
   return (
     <Empty className="p-6 md:p-8">
       <EmptyHeader>
@@ -26,10 +28,11 @@ export function AddPost() {
       </EmptyHeader>
 
       <EmptyContent>
-        <Button>
+        <Button onClick={() => setOpen(e => !e)}>
           Create Code Post
         </Button>
       </EmptyContent>
     </Empty>
   )
 }
+  

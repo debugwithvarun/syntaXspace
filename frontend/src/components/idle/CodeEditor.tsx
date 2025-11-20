@@ -6,6 +6,7 @@ import { useIdle } from "@/hooks/useIdle"
 import { useEffect } from "react"
 import { languageOptions } from "@/lib/LanguageOptions"
 import * as monacoEditor from "monaco-editor"
+
 const CodeEditor = () => {
     
     const {setMsg,setPopUp}=usePop()
@@ -26,12 +27,7 @@ const CodeEditor = () => {
             }
         );
 
-        editor.addCommand(
-            monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-            () => {
-              console.log("code run")
-            }
-          );
+    
     }
     
     useEffect(()=>{

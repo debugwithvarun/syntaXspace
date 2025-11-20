@@ -20,7 +20,7 @@ export function CodeBox() {
 
                 <LanguageButton />
 
-                <CodeEditor />
+                <CodeEditor/>
 
             </ResizablePanel>
             <ResizableHandle withHandle />

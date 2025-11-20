@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 const UserSchema = new mongoose.Schema(
   {
@@ -18,6 +18,7 @@ const UserSchema = new mongoose.Schema(
     pronouns: { type: String, default: "" },
     isDeleted: { type: Boolean, default: false },
     deleteRequestedAt: { type: Date, default: null },
+    post:{type:[Schema.Types.ObjectId],default:[]}
   },
   { timestamps: true }
 );
