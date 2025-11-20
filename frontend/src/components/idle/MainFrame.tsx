@@ -6,11 +6,12 @@ import { useIdle } from "@/hooks/useIdle";
 import { CodeBox } from "./CodeBox";
 import { Button } from "../ui/button";
 import usePop from "@/hooks/usePop";
+import PostDialog from "./PostDialog";
 
 const MainFrame = () => {
-    const { setOpen, postallow, code, language, languageId, stdin, stdout, stderr, executeTime } = useIdle()
+    const { setOpen, postallow, code, language, languageId, stdin, stdout, stderr, executeTime, title, desc, setTitle, setDesc } = useIdle()
 
-    const{setMsg,setPopUp}=usePop()
+    const { setMsg, setPopUp } = usePop()
     const handleOnPost = async () => {
         try {
             const res = await fetch("/api/syntaxspace/save-post", {
@@ -19,15 +20,15 @@ const MainFrame = () => {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    code, language, languageId, stdin, stdout, stderr, time: executeTime
+                    code, language, languageId, stdin, stdout, stderr, time: executeTime, title, description: desc
                 })
             });
-            if(!res.ok){
+            if (!res.ok) {
                 setMsg("Something Went Wrong")
                 setPopUp("de")
             }
-            else{
-                const data=await res.json()
+            else {
+                const data = await res.json()
                 setMsg(data.msg)
                 setPopUp("ds")
                 setOpen(false)
@@ -46,11 +47,13 @@ const MainFrame = () => {
             </div>
 
 
-                <CodeBox handleOnPost={handleOnPost}/>
+            <CodeBox />
 
             <div className="flex w-full justify-end items-center gap-2 ">
                 <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button disabled={!postallow} onClick={handleOnPost}>Post</Button>
+                <PostDialog handleOnPost={handleOnPost} title={title} setTitle={setTitle} desc={desc} setDesc={setDesc}>
+                    <Button disabled={!postallow} >Next</Button>
+                </PostDialog>
             </div>
 
         </Card>

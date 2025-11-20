@@ -16,8 +16,6 @@ const fromBase64 = (b = "") => Buffer.from(b, "base64").toString("utf8");
 
 PostRouter.route("/run-code").post(async (req, res) => {
   try {
-    // console.log(req.body);
-
     const { language_id, source_code, stdin } = req.body;
 
     const response = await fetch(
@@ -38,43 +36,105 @@ PostRouter.route("/run-code").post(async (req, res) => {
     );
 
     const data = await response.json();
+    console.log("Judge0 raw:", data);
 
-    const decoded = {
-      // token: data.token,
-      // status: data.status?.description || "",
+    // Decode all relevant fields
+    const rawStdout =
+      data.stdout && typeof data.stdout === "string"
+        ? fromBase64(data.stdout)
+        : "";
+    const rawStderr =
+      data.stderr && typeof data.stderr === "string"
+        ? fromBase64(data.stderr)
+        : "";
+    const rawCompileOutput =
+      data.compile_output && typeof data.compile_output === "string"
+        ? fromBase64(data.compile_output)
+        : "";
+    const rawMessage =
+      data.message && typeof data.message === "string"
+        ? fromBase64(data.message)
+        : "";
+
+    const status = data.status || null;
+    const statusId = status?.id ?? null;
+    const statusDescription = status?.description || "";
+
+    let finalStdout = rawStdout;
+    let finalStderr = rawStderr;
+
+    // Judge0: status.id === 3 => "Accepted"
+    const isSuccess = statusId === 3;
+
+    if (!isSuccess) {
+      if (finalStderr.trim() === "" && rawCompileOutput.trim() !== "") {
+        finalStderr = `${statusDescription}\n${rawCompileOutput}`.trim();
+      } else if (
+        finalStderr.trim() === "" &&
+        rawCompileOutput.trim() === "" &&
+        rawMessage.trim() !== ""
+      ) {
+        finalStderr = `${statusDescription}\n${rawMessage}`.trim();
+      } else {
+        finalStderr = `${statusDescription}\n${finalStderr}`.trim();
+      }
+    }
+    if (isSuccess) {
+      finalStderr = "";   // very important
+    }
+    
+    const normalized = {
       time: data.time || "",
-      stdout: data.stdout ? fromBase64(data.stdout) : "",
-      stderr: data.stderr ? fromBase64(data.stderr) : "",
-      // compile_output: data.compile_output
-      //   ? fromBase64(data.compile_output)
-      //   : "",
+      status: data.status || null,            // { id, description }
+      status_id: statusId,                    // number
+      status_description: statusDescription,  // string
+      stdout: finalStdout,
+      stderr: finalStderr,                    // error text only (no "Accepted" here)
     };
+    
 
-    return res.status(200).json(decoded);
+    return res.status(200).json(normalized);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ msg: "Something Went Wrong!" });
   }
 });
 
+// --- KEEP YOUR EXISTING /save-post ROUTE AS-IS ---
+// It will now work better because stderr will also contain compile errors.
 
 PostRouter.route("/save-post").post(async (req, res) => {
   try {
-    const { code, language, languageId, stdin, stdout, stderr, time } = req.body;
+    const { code, language, languageId, stdin, stdout, stderr, time,title,description } = req.body;
     const { username } = req.data;
-    const isError = stderr.trim() === "" ? false : true
-    const NewPost = new Post({ code, language, languageId, stdin, stdout, stderr, time, isError })
-    const savedPost = await NewPost.save()
+
+    const isError = stderr.trim() === "" ? false : true;
+
+    const NewPost = new Post({
+      code,
+      language,
+      languageId,
+      stdin,
+      stdout,
+      stderr,
+      time,
+      isError,
+      title,
+      description
+    });
+
+    const savedPost = await NewPost.save();
 
     await User.updateOne(
       { username: username },
       { $push: { post: savedPost._id.toString() } }
     );
 
-    return res.status(200).json({msg:"Code Post Successfull"})
+    return res.status(200).json({ msg: "Code Post Successfull" });
   } catch (error) {
-    console.log(error)
-    return res.status(500).json({msg:"Internal Server Error"})
+    console.log(error);
+    return res.status(500).json({ msg: "Internal Server Error" });
   }
-})
+});
+
 export default PostRouter;

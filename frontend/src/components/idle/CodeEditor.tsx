@@ -6,8 +6,8 @@ import { useIdle } from "@/hooks/useIdle"
 import { useEffect } from "react"
 import { languageOptions } from "@/lib/LanguageOptions"
 import * as monacoEditor from "monaco-editor"
-import { Hand } from "lucide-react"
-const CodeEditor = ({handleOnPost}:{handleOnPost:()=>void}) => {
+
+const CodeEditor = () => {
     
     const {setMsg,setPopUp}=usePop()
     const {code,language,setCode,setPostAllow}=useIdle()

@@ -27,6 +27,12 @@ interface IdleContextType{
     
     stderr:string,
     setStderr:React.Dispatch<React.SetStateAction<string>>,
+
+    title:string,
+    setTitle:React.Dispatch<React.SetStateAction<string>>,
+
+    desc:string,
+    setDesc:React.Dispatch<React.SetStateAction<string>>,
     
 }
 

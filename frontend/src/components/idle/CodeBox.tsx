@@ -10,7 +10,7 @@ import CodeEditor from "./CodeEditor"
 
 import CodeRunner from "./CodeRunner"
 
-export function CodeBox({handleOnPost}:{handleOnPost:()=>void}) {
+export function CodeBox() {
     return (
         <ResizablePanelGroup
             direction="horizontal"
@@ -20,7 +20,7 @@ export function CodeBox({handleOnPost}:{handleOnPost:()=>void}) {
 
                 <LanguageButton />
 
-                <CodeEditor handleOnPost={handleOnPost}/>
+                <CodeEditor/>
 
             </ResizablePanel>
             <ResizableHandle withHandle />
