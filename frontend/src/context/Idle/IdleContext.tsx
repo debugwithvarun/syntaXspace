@@ -4,6 +4,12 @@ interface IdleContextType{
     open:boolean,
     setOpen:React.Dispatch<React.SetStateAction<boolean>>,
 
+    openView:boolean,
+    setOpenView:React.Dispatch<React.SetStateAction<boolean>>,
+
+    id:string,
+    setId:React.Dispatch<React.SetStateAction<string>>,
+
     postallow:boolean,
     setPostAllow:React.Dispatch<React.SetStateAction<boolean>>,
     

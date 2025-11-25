@@ -10,8 +10,8 @@ import * as monacoEditor from "monaco-editor"
 const CodeEditor = () => {
     
     const {setMsg,setPopUp}=usePop()
-    const {code,language,setCode,setPostAllow}=useIdle()
-
+    const {code,language,setCode,setPostAllow,openView}=useIdle()
+    console.log(language,code)
     const handleOnMount = (editor: monacoEditor.editor.IStandaloneCodeEditor, monaco: typeof monacoEditor) => {
         editor.focus()
         editor.onDidChangeCursorSelection(() => {
@@ -32,21 +32,25 @@ const CodeEditor = () => {
     
     useEffect(()=>{
         const defaultCode=languageOptions.find((l)=>l.id===language)
+        console.log(defaultCode)
         setCode(defaultCode?.boilerplate|| "")
     },[language,setCode])
 
     return (
         <Editor
+        
             className="w-full rounded-lg overflow-hidden border "
             theme="vs-dark"
             language={language}
             value={code}
             loading={<ShimmerLoader />}
-
+            defaultValue={code}
             onMount={handleOnMount}
             options={{
                 fontFamily: "JetBrains Mono",
                 fontSize: 14,
+                readOnly:openView,
+                domReadOnly: openView,  
                 minimap: { enabled: true, },
                 automaticLayout: true,
 

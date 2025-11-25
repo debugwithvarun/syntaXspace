@@ -11,14 +11,14 @@ import IdleProvider from './context/Idle/IdleProvider.tsx'
 createRoot(document.getElementById('root')!).render(
   <BrowserRouter>
     <AuthProvider>
+          <IdleProvider>
       <NetworkProvider>
         <PopUpProvider>
-          <IdleProvider>
 
           <App />
-          </IdleProvider>
         </PopUpProvider>
       </NetworkProvider>
+          </IdleProvider>
     </AuthProvider>
   </BrowserRouter>
 

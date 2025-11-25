@@ -85,10 +85,12 @@ export default function UserMenu() {
             <PinIcon size={16} className="opacity-60" aria-hidden="true" />
             <span>Option 4</span>
           </DropdownMenuItem> */}
-          <DropdownMenuItem>
+         <Link to={`/profile/${username}`}>
+         <DropdownMenuItem>
             <UserPenIcon size={16} className="opacity-60" aria-hidden="true" />
             <span>View Profile</span>
           </DropdownMenuItem>
+         </Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <Link to={"/logout"}>

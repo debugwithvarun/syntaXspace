@@ -3,8 +3,10 @@ import IdleContext from "./IdleContext"
 
 const IdleProvider = ({ children }: { children: React.ReactNode }) => {
     const [open, setOpen] = useState(false)
+    const [openView, setOpenView] = useState(false)
     const [postallow, setPostAllow] = useState(false)
     const [code, setCode] = useState("")
+    const [id, setId] = useState("")
     const [stdin, setStdin] = useState("")
     const [executeTime, setExecuteTime] = useState("0")
     const [stdout, setStdout] = useState("")
@@ -14,7 +16,7 @@ const IdleProvider = ({ children }: { children: React.ReactNode }) => {
     const [title, setTitle] = useState("")
     const [desc, setDesc] = useState("")
     return (
-        <IdleContext.Provider value={{ open, language, code, setCode, setLanguage, setOpen, stdin, setStdin, languageId, setLanguageId, stderr, setStderr, stdout, setStdout, postallow, setPostAllow, executeTime, setExecuteTime, title, setTitle, desc, setDesc}}>
+        <IdleContext.Provider value={{ open, language, code, setCode, setLanguage, setOpen, stdin, setStdin, languageId, setLanguageId, stderr, setStderr, stdout, setStdout, postallow, setPostAllow, executeTime, setExecuteTime, title, setTitle, desc, setDesc,openView, setOpenView,id,setId}}>
             {children}
         </IdleContext.Provider>
     )

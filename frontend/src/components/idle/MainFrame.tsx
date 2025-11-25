@@ -10,7 +10,7 @@ import PostDialog from "./PostDialog";
 
 const MainFrame = () => {
     const { setOpen, postallow, code, language, languageId, stdin, stdout, stderr, executeTime, title, desc, setTitle, setDesc } = useIdle()
-
+    console.log(language,languageId)
     const { setMsg, setPopUp } = usePop()
     const handleOnPost = async () => {
         try {

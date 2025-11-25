@@ -15,15 +15,17 @@ import Logout from "./components/login/Logout"
 import IdleDashboard from "./Pages/IdleDashboard"
 
 import { useIdle } from "./hooks/useIdle"
+import ProfileDashboard from "./Pages/ProfileDashboard"
 
 
 const App = () => {
  const {popUp,msg} =  usePop()
- const {open}=useIdle()
+ const {open,openView}=useIdle()
   return (
     <>
    
     {open&&<IdleDashboard/>}
+    {openView&&<IdleDashboard/>}
   
      <div className="fixed z-10 top-6 right-6">
         {popUp==="e" && <ErrorPopUp msg={msg}/>}
@@ -37,6 +39,8 @@ const App = () => {
         {popUp==="dw" && <WarningPopUp msg={msg}/>}
         
       </div>
+
+
     <Routes >
      
       <Route path="/signup" element={<Authentication/>} />
@@ -46,6 +50,7 @@ const App = () => {
         <Route path="/" element={<AppDashboard/>}/>
         <Route path="/setting" element={<Setting/>}/>
         <Route path="/network" element={<NetworkDashbaord/>}/>
+        <Route path="/profile/:target_user" element={<ProfileDashboard/>}/>
         <Route path="/logout" element={<Logout/>}/>
       </Route>
     </Routes>

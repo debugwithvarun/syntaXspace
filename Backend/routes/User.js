@@ -390,4 +390,46 @@ Userrouter.route("/setting/security").put(verifyToken, async (req, res) => {
   });
   
 
+  Userrouter.route("/get-about-info/:username").get(async (req, res) => {
+    try {
+      const { username } = req.params
+  
+      // pick only the fields you want to expose publicly
+      const user = await User.findOne(
+        { username },
+        {
+          _id: 0,
+          name: 1,
+          username: 1,
+          bio: 1,
+          skills: 1,
+          website: 1,
+          phoneno: 1,
+          location: 1,
+          dob: 1,
+          pronouns: 1,
+          profilepic: 1,
+        }
+      )
+  
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        })
+      }
+  
+      return res.status(200).json({
+        success: true,
+        data: user,
+      })
+    } catch (error) {
+      console.error("❌ Error in /get-about-info:", error)
+      return res.status(500).json({
+        success: false,
+        message: "Something went wrong",
+      })
+    }
+  })
+  
 export default Userrouter;

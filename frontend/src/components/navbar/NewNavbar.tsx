@@ -41,7 +41,7 @@ export default function NewNavbar() {
   const location = useLocation()
 
   return (
-    <header className=" px-4 md:px-6 sticky top-0 bg-background">
+    <header className=" px-4 md:px-6 sticky top-0 bg-background z-409">
       <div className="flex h-16 items-center justify-between gap-4">
         {/* Left side */}
         <div className="flex flex-1 items-center gap-2">

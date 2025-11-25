@@ -9,8 +9,10 @@ import LanguageButton from "./LanguageButton"
 import CodeEditor from "./CodeEditor"
 
 import CodeRunner from "./CodeRunner"
+import { useIdle } from "@/hooks/useIdle"
 
 export function CodeBox() {
+    const {openView}=useIdle()
     return (
         <ResizablePanelGroup
             direction="horizontal"
@@ -18,7 +20,7 @@ export function CodeBox() {
         >
             <ResizablePanel defaultSize={65} className="p-2 flex flex-col gap-4" minSize={30}>
 
-                <LanguageButton />
+                {!openView && <LanguageButton />}
 
                 <CodeEditor/>
 
