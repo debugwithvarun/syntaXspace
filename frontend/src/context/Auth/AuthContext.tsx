@@ -11,7 +11,9 @@ interface AuthContextType {
   name:string ;
   username:string ;
   email:string ;
-  profilepic:string
+  profilepic:string;
+  postCount:number ;
+  setPostCount:React.Dispatch<React.SetStateAction<number>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

@@ -3,10 +3,7 @@ import { useEffect, useId, useState } from "react"
 import { Button } from "@/components/ui/button"
 import logo from "../../assets/logo/purpletext.png"
 import {
-  Dialog,
-  DialogContent,
-
-  DialogTrigger,
+  Dialog,DialogContent,DialogTitle,DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -33,7 +30,9 @@ export default function PostDialog({children,handleOnPost,title,setTitle,desc,se
             {children}
         
       </DialogTrigger>
-      <DialogContent>
+      
+      <DialogContent aria-describedby={undefined}>
+      <DialogTitle> </DialogTitle>
         <div className="flex flex-col items-center gap-2">
      
          <img src={logo} alt="logo" className="h-15" />

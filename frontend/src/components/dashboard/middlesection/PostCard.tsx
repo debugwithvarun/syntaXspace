@@ -1,9 +1,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useIdle } from "@/hooks/useIdle";
 import { Heart, MessageCircle } from "lucide-react";
-import { Link } from "react-router-dom";
+
 
 const PostCard = () => {
+  const {setOpenView}=useIdle()
   return (
     <Card className="p-5 sm:p-6 rounded-xl border border-border/60  shadow-sm hover:shadow-md transition-shadow">
       
@@ -47,12 +50,13 @@ const PostCard = () => {
 
       {/* View code link */}
    
-        <Link
-          to="/"
-          className="inline-flex items-center text-xs font-medium text-primary hover:underline"
+        <Button
+        variant={"ghost"}
+        onClick={()=>setOpenView(true)}
+          className="inline-flex items-start text-start w-fit text-xs font-medium text-primary "
         >
           View Code
-        </Link>
+        </Button>
 
 
       {/* Footer: likes, comments, time */}

@@ -93,6 +93,7 @@ const Login = () => {
               value={formData.usernameOrEmail}
               onChange={handleChange}
               placeholder="Username"
+              autoComplete='on'
               required
               className="w-full px-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300 hover:bg-white/15"
             />
@@ -105,6 +106,7 @@ const Login = () => {
               value={formData.password}
               onChange={handleChange}
               placeholder="Password"
+              autoComplete="off"
               required
               className="w-full px-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-300 hover:bg-white/15"
             />

@@ -9,30 +9,37 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { useIdle } from "@/hooks/useIdle"
+import { useAuth } from "@/hooks/useAuth"
 
 export function AddPost() {
-  const {setOpen}=useIdle()
+  const { postCount } = useAuth()
+  const { setOpen } = useIdle()
+
+  const isEmpty = postCount === 0
+
   return (
-    <Empty className="p-6 md:p-8">
+    <Empty className={`p-6 md:p-8 ${!isEmpty && "border-t bg-muted/30"}`}>
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <IconCode />
         </EmptyMedia>
 
-        <EmptyTitle>No Posts Yet</EmptyTitle>
+        <EmptyTitle>
+          {isEmpty ? "No Posts Yet" : "Add Another Post"}
+        </EmptyTitle>
 
         <EmptyDescription>
-          You haven&apos;t shared any code posts yet. Create your first post to
-          share your work with others.
+          {isEmpty
+            ? "You haven't shared any code posts yet. Create your first post to share your work with others."
+            : "Keep building your profile by sharing more awesome code posts."}
         </EmptyDescription>
       </EmptyHeader>
 
       <EmptyContent>
-        <Button onClick={() => setOpen(e => !e)}>
-          Create Code Post
+        <Button onClick={() => setOpen((e) => !e)}>
+          {isEmpty ? "Create Code Post" : "Add More Posts"}
         </Button>
       </EmptyContent>
     </Empty>
   )
 }
-  

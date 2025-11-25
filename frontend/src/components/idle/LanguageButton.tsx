@@ -1,4 +1,3 @@
-"use client"
 
 import { useState } from "react"
 import { ChevronDownIcon } from "lucide-react"
@@ -37,7 +36,7 @@ export default function LanguageButton() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          className="max-w-64 md:max-w-xs max-h-[400px] ml-10 overflow-auto scrollbar-none"
+          className="max-w-64 md:max-w-xs max-h-[400px z-600 ml-10 overflow-auto scrollbar-none"
           side="bottom"
           sideOffset={4}
           align="end"

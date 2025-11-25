@@ -274,4 +274,48 @@ Networkrouter.route("/remove-following/:username").delete(async(req,res)=>{
   }
 })
 
+
+Networkrouter
+  .route("/get-network-info/:username")
+  .get(async (req, res) => {
+    try {
+      const target_user = req.params.username
+
+      // Get follower & following arrays only
+      const user = await User.findOne(
+        { username: target_user },
+        { _id: 0, follower: 1, following: 1,bio:1,skills:1,post:1 }
+      )
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        })
+      }
+
+      const followersCount = user.follower?.length || 0;
+      const followingCount = user.following?.length || 0;
+      const postCount=user.post?.length || 0;
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          followersCount,
+          followingCount,
+          postCount,
+          followers: user.follower,  
+          following: user.following, 
+          bio:user.bio,
+          skills:user.skills 
+        },
+      })
+    } catch (error) {
+      console.error(error)
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      })
+    }
+  })
 export default Networkrouter;
