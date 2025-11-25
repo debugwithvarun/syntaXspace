@@ -7,7 +7,7 @@
 // 4. setLikeCount
 // 5. setLiked
 
-  export const handleLikeClick = async ({e,_id,setIsLiked,setLikeCount,setLiked}: {e: React.MouseEvent<HTMLButtonElement>, _id: string, setIsLiked: React.Dispatch<React.SetStateAction<boolean>>, setLikeCount: React.Dispatch<React.SetStateAction<number>>, setLiked: React.Dispatch<React.SetStateAction<string[]>>}) => {
+  export const handleLikeClick = async ({e,_id,setIsLiked,setLikeCount,setLiked}: {e: React.MouseEvent<HTMLSpanElement>, _id: string, setIsLiked: React.Dispatch<React.SetStateAction<boolean>>, setLikeCount: React.Dispatch<React.SetStateAction<number>>, setLiked: React.Dispatch<React.SetStateAction<string[]>>}) => {
     e.stopPropagation()
 
     const res=await fetch(`/api/syntaxspace/post-like/:postId`.replace(':postId',_id),{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'}})

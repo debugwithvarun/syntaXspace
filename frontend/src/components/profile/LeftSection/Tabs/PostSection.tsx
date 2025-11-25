@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react"
 
 import { useAuth } from "@/hooks/useAuth"
-import PostCard from "./PostCard"
+import PostCard from "@/components/postCard/PostCard"
+
 
 export type PostSummary = {
   _id: string
