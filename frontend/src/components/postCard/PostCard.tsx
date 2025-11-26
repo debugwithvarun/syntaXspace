@@ -21,14 +21,14 @@ const PostCard: React.FC<PostSummary> = ({
   timeLabel = "Just now",
 }) => {
   const { setOpenView, setId } = useIdle()
-  const { username } = useAuth()
+  const { username, name } = useAuth()
 
   const [liked, setLiked] = useState(likes)
   const [likeCount, setLikeCount] = useState(likes_count)
   const [isLiked, setIsLiked] = useState(liked.includes(username))
   const [showComment, setShowComment] = useState(false)
   
-  console.log("PostCard rendered with likes:", likes, "and username:", username)
+
   const handleOpenView = () => {
     setId(_id)
     setOpenView(true)
@@ -47,6 +47,7 @@ const PostCard: React.FC<PostSummary> = ({
       className="cursor-pointer rounded-xl border border-border/60 p-6"
       onClick={handleOpenView}
     >
+
       {/* Title & description */}
       <div className="space-y-1">
         <h3 className="text-base font-semibold tracking-tight text-primary sm:text-lg line-clamp-2">
@@ -60,7 +61,7 @@ const PostCard: React.FC<PostSummary> = ({
 
       {/* Footer: likes / comments / time */}
       <div
-        className="mt-1 flex items-center justify-between border-t border-border/60 pt-2 pb-3"
+        className="mt-1 flex items-center justify-between border-t border-border/60 pt-2 "
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-2 sm:gap-3">
@@ -89,7 +90,7 @@ const PostCard: React.FC<PostSummary> = ({
           >
             <MessageCircle className="h-4 w-4" />
             <span>
-              {commentCount} Comment{commentCount !== 1 ? "s" : ""}
+              {commentCount} Comment
             </span>
           </span>
         </div>
@@ -100,10 +101,12 @@ const PostCard: React.FC<PostSummary> = ({
    
       {showComment && (
         <div
-          className="mt-3 rounded-xl px-3 py-3 animate-in slide-in-from-top-2"
+          className="rounded-xl px-3 animate-in slide-in-from-top-2"
           onClick={(e) => e.stopPropagation()}
         >
           <CommentSection
+            username={username}
+            name={name}
             postId={_id}
             comments={comment} // expects Comment[] from PostSummary
             onClose={() => setShowComment(false)}

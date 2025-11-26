@@ -4,6 +4,7 @@ import Post from "../models/Post.js";
 import User from "../models/User.js";
 import mongoose from "mongoose";
 import { getTimeLabel } from "../Function/Timelabel.js";
+
 dotenv.config();
 
 const PostRouter = express.Router();
@@ -15,6 +16,7 @@ const judgeapihost = process.env.JUDGEAPIHOST;
 const toBase64 = (s = "") => Buffer.from(s, "utf8").toString("base64");
 const fromBase64 = (b = "") => Buffer.from(b, "base64").toString("utf8");
 
+// ======================= RUN CODE ==========================
 PostRouter.route("/run-code").post(async (req, res) => {
   try {
     const { language_id, source_code, stdin } = req.body;
@@ -37,9 +39,7 @@ PostRouter.route("/run-code").post(async (req, res) => {
     );
 
     const data = await response.json();
-    // console.log("Judge0 raw:", data);
 
-    // Decode all relevant fields
     const rawStdout =
       data.stdout && typeof data.stdout === "string"
         ? fromBase64(data.stdout)
@@ -64,7 +64,6 @@ PostRouter.route("/run-code").post(async (req, res) => {
     let finalStdout = rawStdout;
     let finalStderr = rawStderr;
 
-    // Judge0: status.id === 3 => "Accepted"
     const isSuccess = statusId === 3;
 
     if (!isSuccess) {
@@ -81,18 +80,17 @@ PostRouter.route("/run-code").post(async (req, res) => {
       }
     }
     if (isSuccess) {
-      finalStderr = "";   // very important
+      finalStderr = ""; // very important
     }
-    
+
     const normalized = {
       time: data.time || "",
-      status: data.status || null,            // { id, description }
-      status_id: statusId,                    // number
-      status_description: statusDescription,  // string
+      status: data.status || null,
+      status_id: statusId,
+      status_description: statusDescription,
       stdout: finalStdout,
-      stderr: finalStderr,                    // error text only (no "Accepted" here)
+      stderr: finalStderr,
     };
-    
 
     return res.status(200).json(normalized);
   } catch (error) {
@@ -101,11 +99,21 @@ PostRouter.route("/run-code").post(async (req, res) => {
   }
 });
 
-
+// ======================= SAVE POST ==========================
 
 PostRouter.route("/save-post").post(async (req, res) => {
   try {
-    const { code, language, languageId, stdin, stdout, stderr, time,title,description } = req.body;
+    const {
+      code,
+      language,
+      languageId,
+      stdin,
+      stdout,
+      stderr,
+      time,
+      title,
+      description,
+    } = req.body;
     const { username } = req.data;
 
     const isError = stderr.trim() === "" ? false : true;
@@ -120,7 +128,7 @@ PostRouter.route("/save-post").post(async (req, res) => {
       time,
       isError,
       title,
-      description
+      description,
     });
 
     const savedPost = await NewPost.save();
@@ -137,104 +145,165 @@ PostRouter.route("/save-post").post(async (req, res) => {
   }
 });
 
-
-
-
-
-
+// ======================= GET POSTS (WITH COMMENTS) ==========================
 PostRouter.route("/get-post").get(async (req, res) => {
   try {
-  
-    const username =
-      req?.data?.username ||      // e.g. custom middleware
-      req?.user?.username ||      // e.g. auth middleware (passport/jwt)
-      req.query.username          // fallback: query param ?username=
+    const viewerUsername =
+      req?.data?.username || req?.user?.username || req.query.username;
 
-    if (!username) {
+    if (!viewerUsername) {
       return res.status(400).json({
         success: false,
         message: "Username is required.",
-      })
+      });
     }
 
-    const user = await User.findOne({ username }).select("post")
+    const user = await User.findOne({ username: viewerUsername }).select("post");
 
     if (!user) {
       return res.status(404).json({
         success: false,
         message: "User not found.",
-      })
+      });
     }
 
-    // If user has no posts, just return empty array
     if (!user.post || user.post.length === 0) {
       return res.status(200).json({
         success: true,
         message: "No posts found for this user.",
         data: [],
-      })
+      });
     }
 
-    // 🔥 Fetch and sort posts (latest first)
     const posts = await Post.find({
       _id: { $in: user.post },
     })
       .select("title description comment likes createdAt")
       .sort({ createdAt: -1 })
-      .lean() // get plain objects
+      .lean();
 
-    const formattedPosts = posts.map((post) => ({
-      _id: post._id,
-      title: post.title,
-      description: post.description,
-      likes: post.likes,
-      comment: post.comment,
-      commentCount: Array.isArray(post.comment) ? post.comment.length : 0,
-      likes_count: Array.isArray(post.likes) ? post.likes.length : 0,
-      timeLabel: getTimeLabel(post.createdAt),
-    }))
+    // collect usernames for avatars (comments + replies)
+    const usernames = new Set();
+    posts.forEach((post) => {
+      post?.comment?.forEach((c) => {
+        if (c?.username) usernames.add(c.username);
+        c?.replies?.forEach((r) => {
+          if (r?.username) usernames.add(r.username);
+        });
+      });
+    });
+
+    const avatarData = await User.find(
+      { username: { $in: Array.from(usernames) } },
+      { username: 1, profilepic: 1 }
+    );
+
+    const avatarMap = {};
+    avatarData.forEach((u) => {
+      avatarMap[u.username] = u.profilepic || "";
+    });
+
+    const formattedPosts = posts.map((post) => {
+      const formattedComments = Array.isArray(post.comment)
+        ? post.comment.map((comment) => {
+            const cLikesArr = Array.isArray(comment.likes)
+              ? comment.likes
+              : [];
+            const cLikesCount = cLikesArr.length;
+            const cIsLiked = viewerUsername
+              ? cLikesArr.includes(viewerUsername)
+              : false;
+
+            const formattedReplies = Array.isArray(comment.replies)
+              ? comment.replies.map((reply) => {
+                  const rLikesArr = Array.isArray(reply.likes)
+                    ? reply.likes
+                    : [];
+                  const rLikesCount = rLikesArr.length;
+                  const rIsLiked = viewerUsername
+                    ? rLikesArr.includes(viewerUsername)
+                    : false;
+
+                  return {
+                    _id: reply._id,
+                    username: reply.username,
+                    avatar: avatarMap[reply.username] || "",
+                    text: reply.text,
+                    createdAt: reply.createdAt,
+                    likes: rLikesCount,
+                    isLiked: rIsLiked,
+                  };
+                })
+              : [];
+
+            return {
+              _id: comment._id,
+              username: comment.username,
+              name: comment.name || "", // if you don't store name, it's fine
+              avatar: avatarMap[comment.username] || "",
+              text: comment.text,
+              createdAt: comment.createdAt,
+              likes: cLikesCount,
+              isLiked: cIsLiked,
+              replies: formattedReplies,
+            };
+          })
+        : [];
+
+      return {
+        _id: post._id,
+        title: post.title,
+        description: post.description,
+        likes: post.likes, // still array of usernames at post level
+        comment: formattedComments,
+        commentCount: Array.isArray(post.comment) ? post.comment.length : 0,
+        likes_count: Array.isArray(post.likes) ? post.likes.length : 0,
+        timeLabel: getTimeLabel(post.createdAt),
+      };
+    });
 
     return res.status(200).json({
       success: true,
       message: "Posts fetched successfully.",
       data: formattedPosts,
-    })
+    });
   } catch (error) {
-    console.error("Error fetching posts:", error)
+    console.error("Error fetching posts:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error.",
-    })
+    });
   }
-})
+});
 
+// ======================= IDLE GET (OPEN IN EDITOR) ==========================
 PostRouter.route("/idle-get").get(async (req, res) => {
   try {
-    const { id } = req.query // frontend should call: /idle-get?id=POST_ID
+    const { id } = req.query;
 
     if (!id) {
       return res.status(400).json({
         success: false,
         message: "Post id is required.",
-      })
+      });
     }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid post id.",
-      })
+      });
     }
 
     const post = await Post.findById(id).select(
       "code languageId stdin stdout stderr isError language"
-    )
+    );
 
     if (!post) {
       return res.status(404).json({
         success: false,
         message: "Post not found.",
-      })
+      });
     }
 
     return res.status(200).json({
@@ -249,45 +318,258 @@ PostRouter.route("/idle-get").get(async (req, res) => {
         stderr: post.stderr || "",
         isError: post.isError,
       },
-    })
+    });
   } catch (error) {
-    console.error("Error fetching idle post:", error)
+    console.error("Error fetching idle post:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error.",
-    })
+    });
   }
-})
+});
 
-
-PostRouter.route("/post-like/:postId").post(async(req,res)=>{
+// ======================= POST LIKE (TOP LEVEL POST) ==========================
+PostRouter.route("/post-like/:postId").post(async (req, res) => {
   try {
-  
-    const {postId} = req.params;
-    console.log("postId:",postId);
-    const {username:targetUser} = req.data;
-    let liked=false;
-    const post = await Post.findById(postId);
-    if(!post){
-      return res.status(404).json({success:false,msg:"Post Not Found"})
-    }
-    const likesArray = post.likes || [];
+    const { postId } = req.params;
+    const { username: targetUser } = req.data;
 
+    let liked = false;
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Post Not Found" });
+    }
+
+    const likesArray = post.likes || [];
     const userIndex = likesArray.indexOf(targetUser);
-    if(userIndex===-1){
-      // Not liked yet, so like it
+
+    if (userIndex === -1) {
       liked = true;
       likesArray.push(targetUser);
-    }else{
-      // Already liked, so unlike it
+    } else {
       liked = false;
-      likesArray.splice(userIndex,1);
+      likesArray.splice(userIndex, 1);
     }
+
     post.likes = likesArray;
     await post.save();
-    return res.status(200).json({success:true,msg:"Post like status updated", liked, likes: likesArray });
+
+    return res.status(200).json({
+      success: true,
+      msg: "Post like status updated",
+      liked,
+      likes: likesArray,
+    });
   } catch (error) {
-    return res.status(500).json({success:false,msg:"Internal Server Error"})
+    return res
+      .status(500)
+      .json({ success: false, msg: "Internal Server Error" });
   }
-})
+});
+
+// ======================= ADD COMMENT ==========================
+PostRouter.route("/add-comment").post(async (req, res) => {
+  try {
+    const { username, text, postId, userID } = req.body;
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Post Not Found" });
+    }
+
+    post.comment.push({
+      username,
+      text,
+      userID,
+      likes: [],
+      replies: [],
+      createdAt: new Date(),
+    });
+
+    await post.save();
+
+    return res.status(200).json({
+      success: true,
+      msg: "Comment added successfully",
+      comment: post.comment,
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ success: false, msg: "Internal Server Error" });
+  }
+});
+
+// ======================= ADD REPLY ==========================
+PostRouter.route("/add-reply").post(async (req, res) => {
+  try {
+    const { username, text, postId, commentId, userID } = req.body;
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Post Not Found" });
+    }
+
+    const comment = post.comment.id(commentId);
+    if (!comment) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Comment Not Found" });
+    }
+
+    comment.replies.push({
+      username,
+      text,
+      userID,
+      likes: [],
+    });
+
+    await post.save();
+
+    return res.status(200).json({
+      success: true,
+      msg: "Reply added successfully",
+      reply: comment.replies,
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ success: false, msg: "Internal Server Error" });
+  }
+});
+
+// ======================= COMMENT LIKE ==========================
+PostRouter.route("/comment-like").post(async (req, res) => {
+  try {
+    const { postId, commentId } = req.body;
+    const { username } = req.data || {};
+
+    if (!postId || !commentId || !username) {
+      return res.status(400).json({
+        success: false,
+        msg: "postId, commentId and auth username are required",
+      });
+    }
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Post Not Found" });
+    }
+
+    const comment = post.comment.id(commentId);
+    if (!comment) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Comment Not Found" });
+    }
+
+    if (!Array.isArray(comment.likes)) {
+      comment.likes = [];
+    }
+
+    let liked = false;
+    const idx = comment.likes.indexOf(username);
+
+    if (idx === -1) {
+      comment.likes.push(username);
+      liked = true;
+    } else {
+      comment.likes.splice(idx, 1);
+      liked = false;
+    }
+
+    await post.save();
+
+    return res.status(200).json({
+      success: true,
+      msg: "Comment like status updated",
+      liked,
+      likes: comment.likes.length,
+      commentId,
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ success: false, msg: "Internal Server Error" });
+  }
+});
+
+// ======================= REPLY LIKE ==========================
+PostRouter.route("/reply-like").post(async (req, res) => {
+  try {
+    const { postId, commentId, replyId } = req.body;
+    const { username } = req.data || {};
+
+    if (!postId || !commentId || !replyId || !username) {
+      return res.status(400).json({
+        success: false,
+        msg: "postId, commentId, replyId and auth username are required",
+      });
+    }
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Post Not Found" });
+    }
+
+    const comment = post.comment.id(commentId);
+    if (!comment) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Comment Not Found" });
+    }
+
+    const reply = comment.replies.id(replyId);
+    if (!reply) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Reply Not Found" });
+    }
+
+    if (!Array.isArray(reply.likes)) {
+      reply.likes = [];
+    }
+
+    let liked = false;
+    const idx = reply.likes.indexOf(username);
+
+    if (idx === -1) {
+      reply.likes.push(username);
+      liked = true;
+    } else {
+      reply.likes.splice(idx, 1);
+      liked = false;
+    }
+
+    await post.save();
+
+    return res.status(200).json({
+      success: true,
+      msg: "Reply like status updated",
+      liked,
+      likes: reply.likes.length,
+      replyId,
+      commentId,
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ success: false, msg: "Internal Server Error" });
+  }
+});
+
 export default PostRouter;
