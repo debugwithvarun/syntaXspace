@@ -8,6 +8,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [username,setUsername]=useState("")
     const [email,setEmail]=useState("")
     const [name,setName]=useState("")
+    const [userId,setUserId]=useState("")
     const [postCount,setPostCount]=useState(0)
     const [profilepic,setProfilePic]=useState("")
 
@@ -25,6 +26,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setProfilePic(`${ImagePath(userInfo.profilepic)}`)
             setEmail(userInfo.email)
             setName(userInfo.name)
+            setUserId(userInfo._id)
             setIsAuth(data.success); 
             setPostCount(userInfo.post?.length || 0)
           } else {
@@ -40,7 +42,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, []);
     console.log(username,profilepic,name)
     return (
-      <AuthContext.Provider value={{ isAuth, loading,setIsAuth,username,email,name,setEmail,setName,setUsername ,profilepic,setProfilePic, postCount, setPostCount}}>
+      <AuthContext.Provider value={{ isAuth, loading,setIsAuth,username,email,name,setEmail,setName,setUsername ,profilepic,setProfilePic, postCount, setPostCount,userId,setUserId}}>
         {children}
       </AuthContext.Provider>
     );

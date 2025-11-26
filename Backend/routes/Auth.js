@@ -7,7 +7,7 @@ Authrouter.route("/check-auth").get(async(req,res)=>{
     
     try {
         const data = req.data
-        const getInfo=await User.findOne({username:data.username},{username:1,email:1,name:1,profilepic:1,post:1})
+        const getInfo=await User.findOne({username:data.username},{username:1,email:1,name:1,profilepic:1,post:1,_id:1})
     
         res.json({success:true,userInfo:getInfo})
     } catch {

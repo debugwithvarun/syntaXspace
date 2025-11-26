@@ -8,7 +8,9 @@ interface AuthContextType {
   setUsername:React.Dispatch<React.SetStateAction<string>>;
   setEmail:React.Dispatch<React.SetStateAction<string>>;
   setProfilePic:React.Dispatch<React.SetStateAction<string>>;
+  setUserId:React.Dispatch<React.SetStateAction<string>>;
   name:string ;
+  userId:string ;
   username:string ;
   email:string ;
   profilepic:string;

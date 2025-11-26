@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
   },
 
   filename: (req, file, cb) => {
-    // Use crypto to avoid collisions and hide original names
+    
     const uniqueName = crypto.randomBytes(16).toString("hex");
     const ext = path.extname(file.originalname).toLowerCase();
     cb(null, `${uniqueName}${ext}`);
