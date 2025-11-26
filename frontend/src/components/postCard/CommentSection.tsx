@@ -1,19 +1,32 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Heart, MessageCircle, Send, X } from "lucide-react";
+import { Heart, MessageCircle, Send, X, Trash2 } from "lucide-react";
 import {
   handleCommentLike,
   handleToggleReply,
   handleReplyLike,
   handleSubmitComment,
   handleSubmitReply,
+  handleDeleteComment,
+  handleDeleteReply,
 } from "@/lib/CommentFunction";
 import { getTimeLabel } from "@/lib/getTimeLabel";
 import { useAuth } from "@/hooks/useAuth";
 import ImagePath from "@/lib/ImagePath";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Reply {
   _id: string;
@@ -38,6 +51,8 @@ interface Comment {
 }
 
 interface CommentSectionProps {
+  isCmnt: boolean;
+  setIsCmnt: React.Dispatch<React.SetStateAction<boolean>>;
   name: string;
   username: string; // post author's username (not necessarily viewer)
   postId: string;
@@ -78,12 +93,18 @@ const ReplyItem: React.FC<ReplyItemProps> = React.memo(
       });
     }, [postId, commentId, reply._id, setLocalComments]);
 
+    const isOwner = reply.username === authUsername;
+
     return (
       <div className="group rounded-lg bg-background/60 p-2.5 transition-colors hover:bg-muted/40">
         <div className="flex gap-2.5">
           <Avatar className="h-8 w-8 flex-shrink-0 ring-2 ring-background">
             <AvatarImage
-              src={reply.avatar === profilepic ? profilepic : ImagePath(reply.avatar)}
+              src={
+                reply.avatar === profilepic
+                  ? profilepic
+                  : ImagePath(reply.avatar)
+              }
               alt={reply.username}
             />
             <AvatarFallback className="bg-gradient-to-br from-primary/15 to-primary/5 text-primary text-[10px] font-semibold">
@@ -105,23 +126,63 @@ const ReplyItem: React.FC<ReplyItemProps> = React.memo(
               {reply.text}
             </p>
 
-            <button
-              type="button"
-              onClick={handleLike}
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors group/like"
-              aria-label={reply.isLiked ? "Unlike reply" : "Like reply"}
-            >
-              <Heart
-                className={`h-4 w-4 transition-transform group-hover:scale-110 ${
-                  reply.isLiked
-                    ? "fill-primary text-primary"
-                    : "fill-none stroke-muted-foreground text-muted-foreground"
-                }`}
-              />
-              {reply.likes > 0 && (
-                <span className="font-medium">{reply.likes}</span>
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={handleLike}
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors group/like"
+                aria-label={reply.isLiked ? "Unlike reply" : "Like reply"}
+              >
+                <Heart
+                  className={`h-4 w-4 transition-transform group-hover:scale-110 ${
+                    reply.isLiked
+                      ? "fill-primary text-primary"
+                      : "fill-none stroke-muted-foreground text-muted-foreground"
+                  }`}
+                />
+                {reply.likes > 0 && (
+                  <span className="font-medium">{reply.likes}</span>
+                )}
+              </button>
+
+              {isOwner && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 text-xs text-destructive/80 hover:text-destructive transition-colors"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete reply?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This reply will be permanently removed. This action
+                        cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={() =>
+                          handleDeleteReply({
+                            postId,
+                            commentId,
+                            replyId: reply._id,
+                            setLocalComments,
+                          })
+                        }
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
-            </button>
+            </div>
           </div>
         </div>
       </div>
@@ -143,6 +204,7 @@ interface CommentItemProps {
   setReplyingTo: React.Dispatch<React.SetStateAction<string | null>>;
   setLocalComments: React.Dispatch<React.SetStateAction<Comment[]>>;
   toggleRepliesVisibility: (commentId: string) => void;
+  setIsCmnt?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const CommentItem: React.FC<CommentItemProps> = React.memo(
@@ -158,8 +220,10 @@ const CommentItem: React.FC<CommentItemProps> = React.memo(
     setReplyingTo,
     setLocalComments,
     toggleRepliesVisibility,
+    setIsCmnt,
   }) => {
     const repliesCount = comment.replies?.length ?? 0;
+    const isOwner = comment.username === authUsername;
 
     const onCommentLike = useCallback(() => {
       handleCommentLike({
@@ -187,6 +251,7 @@ const CommentItem: React.FC<CommentItemProps> = React.memo(
         setReplyText,
         setLocalComments,
         setReplyingTo,
+        setIsCmnt,
       });
     }, [
       postId,
@@ -197,6 +262,7 @@ const CommentItem: React.FC<CommentItemProps> = React.memo(
       setReplyText,
       setLocalComments,
       setReplyingTo,
+      setIsCmnt,
     ]);
 
     return (
@@ -243,7 +309,9 @@ const CommentItem: React.FC<CommentItemProps> = React.memo(
                   type="button"
                   onClick={onCommentLike}
                   className="inline-flex items-center gap-1.5 hover:text-primary transition-colors group/like"
-                  aria-label={comment.isLiked ? "Unlike comment" : "Like comment"}
+                  aria-label={
+                    comment.isLiked ? "Unlike comment" : "Like comment"
+                  }
                 >
                   <Heart
                     className={`h-4 w-4 transition-transform group-hover:scale-110 ${
@@ -280,6 +348,44 @@ const CommentItem: React.FC<CommentItemProps> = React.memo(
                           repliesCount === 1 ? "reply" : "replies"
                         }`}
                   </button>
+                )}
+
+                {/* Delete comment (owner only) */}
+                {isOwner && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 text-xs text-destructive/80 hover:text-destructive transition-colors"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete comment?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This comment will be permanently removed. This action
+                          cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          onClick={() =>
+                            handleDeleteComment({
+                              postId,
+                              commentId: comment._id,
+                              setLocalComments,
+                            })
+                          }
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 )}
               </div>
 
@@ -347,6 +453,8 @@ const CommentItem: React.FC<CommentItemProps> = React.memo(
 CommentItem.displayName = "CommentItem";
 
 const CommentSection: React.FC<CommentSectionProps> = ({
+  setIsCmnt,
+  isCmnt,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   username: _postOwnerUsername,
   name,
@@ -362,7 +470,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   const [openReplies, setOpenReplies] = useState<OpenRepliesState>({});
 
   const hasComments = useMemo(() => localComments.length > 0, [localComments]);
-
+ 
   const toggleRepliesVisibility = useCallback((commentId: string) => {
     setOpenReplies((prev) => ({
       ...prev,
@@ -379,9 +487,22 @@ const CommentSection: React.FC<CommentSectionProps> = ({
       newComment,
       setNewComment,
       setLocalComments,
+      setIsCmnt, // 🔁 toggle on new comment
     });
-  }, [authUsername, name, postId, profilepic, newComment, setLocalComments]);
+  }, [
+    authUsername,
+    name,
+    postId,
+    profilepic,
+    newComment,
+    setLocalComments,
+    setIsCmnt,
+  ]);
 
+
+  useEffect(()=>{
+    setLocalComments(comments);
+  },[isCmnt,setLocalComments,comments])
   return (
     <div className="backdrop-blur-sm space-y-3">
       {/* Header */}
@@ -472,6 +593,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                 setReplyingTo={setReplyingTo}
                 setLocalComments={setLocalComments}
                 toggleRepliesVisibility={toggleRepliesVisibility}
+                setIsCmnt={setIsCmnt} // 🔁 pass down so replies also toggle
               />
             ))
           )}

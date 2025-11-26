@@ -10,7 +10,8 @@ export type PostSummary = {
   description: string
   commentCount: number
   likes:string[]
-  comment:[]
+  setIsDlt:React.Dispatch<React.SetStateAction<boolean>>;
+
   likes_count: number
   timeLabel:string
 }
@@ -26,7 +27,7 @@ const PostSection: React.FC = () => {
   const [posts, setPosts] = useState<PostSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
+  const [dlt,setIsDlt]=useState(false)
 useEffect(() => {
   // No username → no need to hit API
   if (!username) {
@@ -72,7 +73,7 @@ useEffect(() => {
   loadPosts()
 
   return () => controller.abort()
-}, [username])
+}, [username,dlt])
 
 
   if (loading) {
@@ -105,13 +106,14 @@ useEffect(() => {
     <div className="flex h-full w-full flex-col gap-4">
       {posts.map((post) => (
         <PostCard
+        setIsDlt={setIsDlt}
           key={post._id}
           _id={post._id}
           title={post.title}
           description={post.description}
           likes_count={post.likes_count}
           likes={post.likes}
-          comment={post.comment}
+     
           commentCount={post.commentCount}
           timeLabel={post.timeLabel}
         />

@@ -369,6 +369,85 @@ PostRouter.route("/post-like/:postId").post(async (req, res) => {
   }
 });
 
+
+// ======================= DELETE POST ==========================
+PostRouter.route("/delete-post/:postId").delete(async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { username } = req.data || {};
+
+    if (!username) {
+      return res.status(401).json({
+        success: false,
+        msg: "Unauthorized: username not found in auth data",
+      });
+    }
+
+    if (!postId) {
+      return res.status(400).json({
+        success: false,
+        msg: "Post id is required",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(postId)) {
+      return res.status(400).json({
+        success: false,
+        msg: "Invalid post id",
+      });
+    }
+
+    // Find the user
+    const user = await User.findOne({ username }).select("post");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        msg: "User not found",
+      });
+    }
+
+    // Check ownership: postId must exist in user's post array
+    const ownsPost = user.post.some(
+      (id) => id.toString() === postId.toString()
+    );
+
+    if (!ownsPost) {
+      return res.status(403).json({
+        success: false,
+        msg: "You are not allowed to delete this post",
+      });
+    }
+
+    // Delete the post document
+    const deletedPost = await Post.findByIdAndDelete(postId);
+    if (!deletedPost) {
+      return res.status(404).json({
+        success: false,
+        msg: "Post not found",
+      });
+    }
+
+    // Remove post reference from user document
+    await User.updateOne(
+      { username },
+      { $pull: { post: postId } }
+    );
+
+    return res.status(200).json({
+      success: true,
+      msg: "Post deleted successfully",
+      postId,
+    });
+  } catch (error) {
+    console.error("Error deleting post:", error);
+    return res.status(500).json({
+      success: false,
+      msg: "Internal Server Error",
+    });
+  }
+});
+
+
 // ======================= ADD COMMENT ==========================
 PostRouter.route("/add-comment").post(async (req, res) => {
   try {
@@ -390,12 +469,12 @@ PostRouter.route("/add-comment").post(async (req, res) => {
       createdAt: new Date(),
     });
 
-    await post.save();
+    const data = await post.save();
 
     return res.status(200).json({
       success: true,
       msg: "Comment added successfully",
-      comment: post.comment,
+      comment: data.comment,
     });
   } catch (error) {
     console.error(error);
@@ -572,4 +651,252 @@ PostRouter.route("/reply-like").post(async (req, res) => {
   }
 });
 
+// ======================= DELETE COMMENT ==========================
+PostRouter.route("/delete-comment").delete(async (req, res) => {
+  try {
+    const { postId, commentId } = req.body;
+    const { username } = req.data || {};
+
+    if (!postId || !commentId || !username) {
+      return res.status(400).json({
+        success: false,
+        msg: "postId, commentId and auth username are required",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(postId)) {
+      return res.status(400).json({
+        success: false,
+        msg: "Invalid post id",
+      });
+    }
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Post Not Found" });
+    }
+
+    const comment = post.comment.id(commentId);
+    if (!comment) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Comment Not Found" });
+    }
+
+    // Only comment owner can delete (adjust rule if you want post owner / admin too)
+    if (comment.username !== username) {
+      return res.status(403).json({
+        success: false,
+        msg: "You are not allowed to delete this comment",
+      });
+    }
+
+    comment.deleteOne(); // remove subdocument
+    await post.save();
+
+    return res.status(200).json({
+      success: true,
+      msg: "Comment deleted successfully",
+      commentId,
+      postId,
+    });
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    return res.status(500).json({
+      success: false,
+      msg: "Internal Server Error",
+    });
+  }
+});
+
+// ======================= DELETE REPLY ==========================
+PostRouter.route("/delete-reply").delete(async (req, res) => {
+  try {
+    const { postId, commentId, replyId } = req.body;
+    const { username } = req.data || {};
+
+    if (!postId || !commentId || !replyId || !username) {
+      return res.status(400).json({
+        success: false,
+        msg: "postId, commentId, replyId and auth username are required",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(postId)) {
+      return res.status(400).json({
+        success: false,
+        msg: "Invalid post id",
+      });
+    }
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Post Not Found" });
+    }
+
+    const comment = post.comment.id(commentId);
+    if (!comment) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Comment Not Found" });
+    }
+
+    const reply = comment.replies.id(replyId);
+    if (!reply) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Reply Not Found" });
+    }
+
+    // Only reply owner can delete
+    if (reply.username !== username) {
+      return res.status(403).json({
+        success: false,
+        msg: "You are not allowed to delete this reply",
+      });
+    }
+
+    reply.deleteOne(); // remove subdocument
+    await post.save();
+
+    return res.status(200).json({
+      success: true,
+      msg: "Reply deleted successfully",
+      replyId,
+      commentId,
+      postId,
+    });
+  } catch (error) {
+    console.error("Error deleting reply:", error);
+    return res.status(500).json({
+      success: false,
+      msg: "Internal Server Error",
+    });
+  }
+});
+
+// ======================= GET COMMENTS FOR A POST (REAL-TIME) ==========================
+PostRouter.route("/get-comments/:postId").get(async (req, res) => {
+  try {
+    const { postId } = req.params;
+
+    const viewerUsername =
+      req?.data?.username || req?.user?.username || req.query.username;
+
+    if (!viewerUsername) {
+      return res.status(400).json({
+        success: false,
+        message: "Username is required.",
+      });
+    }
+
+    if (!postId) {
+      return res.status(400).json({
+        success: false,
+        message: "Post id is required.",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(postId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid post id.",
+      });
+    }
+
+    const post = await Post.findById(postId).select("comment");
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found.",
+      });
+    }
+
+    const commentsArray = Array.isArray(post.comment) ? [...post.comment] : [];
+
+    // Sort newest first
+    commentsArray.sort(
+      (a, b) =>
+        new Date(b.createdAt || 0).getTime() -
+        new Date(a.createdAt || 0).getTime()
+    );
+
+    // collect usernames for avatars (comments + replies)
+    const usernames = new Set();
+    commentsArray.forEach((c) => {
+      if (c?.username) usernames.add(c.username);
+      c?.replies?.forEach((r) => {
+        if (r?.username) usernames.add(r.username);
+      });
+    });
+
+    const avatarData = await User.find(
+      { username: { $in: Array.from(usernames) } },
+      { username: 1, profilepic: 1 }
+    );
+
+    const avatarMap = {};
+    avatarData.forEach((u) => {
+      avatarMap[u.username] = u.profilepic || "";
+    });
+
+    const formattedComments = commentsArray.map((comment) => {
+      const cLikesArr = Array.isArray(comment.likes) ? comment.likes : [];
+      const cLikesCount = cLikesArr.length;
+      const cIsLiked = viewerUsername
+        ? cLikesArr.includes(viewerUsername)
+        : false;
+
+      const formattedReplies = Array.isArray(comment.replies)
+        ? comment.replies.map((reply) => {
+            const rLikesArr = Array.isArray(reply.likes) ? reply.likes : [];
+            const rLikesCount = rLikesArr.length;
+            const rIsLiked = viewerUsername
+              ? rLikesArr.includes(viewerUsername)
+              : false;
+
+            return {
+              _id: reply._id,
+              username: reply.username,
+              avatar: avatarMap[reply.username] || "",
+              text: reply.text,
+              createdAt: reply.createdAt,
+              timeLabel: getTimeLabel(reply.createdAt),
+              likes: rLikesCount,
+              isLiked: rIsLiked,
+            };
+          })
+        : [];
+
+      return {
+        _id: comment._id,
+        username: comment.username,
+        name: comment.name || "",
+        avatar: avatarMap[comment.username] || "",
+        text: comment.text,
+        createdAt: comment.createdAt,
+        timeLabel: getTimeLabel(comment.createdAt),
+        likes: cLikesCount,
+        isLiked: cIsLiked,
+        replies: formattedReplies,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Comments fetched successfully.",
+      data: formattedComments,
+    });
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+});
 export default PostRouter;

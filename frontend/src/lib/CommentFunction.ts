@@ -31,7 +31,6 @@ export const handleCommentClick = ({
 }) => {
   e.stopPropagation();
   setShowComment((prev) => !prev);
-
 };
 
 export const resetReplyState = ({
@@ -45,6 +44,7 @@ export const resetReplyState = ({
   setReplyText("");
 };
 
+// ========== ADD COMMENT ==========
 export const handleSubmitComment = async ({
   newComment,
   setNewComment,
@@ -53,6 +53,7 @@ export const handleSubmitComment = async ({
   username,
   avatar,
   name,
+  setIsCmnt, // 🔹 optional toggle
 }: {
   newComment: string;
   setNewComment: React.Dispatch<React.SetStateAction<string>>;
@@ -61,6 +62,7 @@ export const handleSubmitComment = async ({
   username: string;
   avatar: string;
   name: string;
+  setIsCmnt?: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   if (!newComment.trim()) return;
 
@@ -97,11 +99,15 @@ export const handleSubmitComment = async ({
 
     setLocalComments((prev) => [tempComment, ...prev]);
     setNewComment("");
+
+    // 🔁 toggle flag so parent can react (refetch, update count, etc.)
+    setIsCmnt?.((prev) => !prev);
   } catch (error) {
     console.error("Error adding comment:", error);
   }
 };
 
+// ========== ADD REPLY ==========
 export const handleSubmitReply = async ({
   commentId,
   postId,
@@ -111,6 +117,7 @@ export const handleSubmitReply = async ({
   setReplyingTo,
   username,
   avatar = "",
+  setIsCmnt, // 🔹 optional toggle
 }: {
   commentId: string;
   replyText: string;
@@ -120,6 +127,7 @@ export const handleSubmitReply = async ({
   setReplyingTo: React.Dispatch<React.SetStateAction<string | null>>;
   username: string;
   avatar: string;
+  setIsCmnt?: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   if (!replyText.trim()) return;
 
@@ -166,6 +174,9 @@ export const handleSubmitReply = async ({
 
     setReplyText("");
     setReplyingTo(null);
+
+    // 🔁 toggle flag so parent can react
+    setIsCmnt?.((prev) => !prev);
   } catch (error) {
     console.error("Error adding reply:", error);
   }
@@ -290,4 +301,77 @@ export const handleToggleReply = ({
     if (!isSame) setReplyText("");
     return isSame ? null : commentId;
   });
+};
+
+// ========== DELETE COMMENT ==========
+export const handleDeleteComment = async ({
+  postId,
+  commentId,
+  setLocalComments,
+}: {
+  postId: string;
+  commentId: string;
+  setLocalComments: React.Dispatch<React.SetStateAction<Comment[]>>;
+}) => {
+  try {
+    const res = await fetch(`/api/syntaxspace/delete-comment`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId, commentId }),
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      console.error("Failed to delete comment");
+      return;
+    }
+
+    setLocalComments((prev) =>
+      prev.filter((comment) => comment._id !== commentId)
+    );
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+  }
+};
+
+// ========== DELETE REPLY ==========
+export const handleDeleteReply = async ({
+  postId,
+  commentId,
+  replyId,
+  setLocalComments,
+}: {
+  postId: string;
+  commentId: string;
+  replyId: string;
+  setLocalComments: React.Dispatch<React.SetStateAction<Comment[]>>;
+}) => {
+  try {
+    const res = await fetch(`/api/syntaxspace/delete-reply`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId, commentId, replyId }),
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      console.error("Failed to delete reply");
+      return;
+    }
+
+    setLocalComments((prev) =>
+      prev.map((comment) =>
+        comment._id === commentId
+          ? {
+              ...comment,
+              replies: comment.replies?.filter(
+                (reply) => reply._id !== replyId
+              ),
+            }
+          : comment
+      )
+    );
+  } catch (error) {
+    console.error("Error deleting reply:", error);
+  }
 };
