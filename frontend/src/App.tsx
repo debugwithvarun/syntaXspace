@@ -20,12 +20,13 @@ import ProfileDashboard from "./Pages/ProfileDashboard"
 
 const App = () => {
  const {popUp,msg} =  usePop()
- const {open,openView}=useIdle()
+ const {open,openView,openEdit}=useIdle()
   return (
     <>
    
     {open&&<IdleDashboard/>}
     {openView&&<IdleDashboard/>}
+    {openEdit&&<IdleDashboard/>}
   
      <div className="fixed z-10 top-6 right-6">
         {popUp==="e" && <ErrorPopUp msg={msg}/>}

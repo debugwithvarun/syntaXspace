@@ -11,7 +11,7 @@ const CodeEditor = () => {
     
     const {setMsg,setPopUp}=usePop()
     const {code,language,setCode,setPostAllow,openView}=useIdle()
-    console.log(language,code)
+    // console.log(language,code)
     const handleOnMount = (editor: monacoEditor.editor.IStandaloneCodeEditor, monaco: typeof monacoEditor) => {
         editor.focus()
         editor.onDidChangeCursorSelection(() => {
@@ -32,7 +32,7 @@ const CodeEditor = () => {
     
     useEffect(()=>{
         const defaultCode=languageOptions.find((l)=>l.id===language)
-        console.log(defaultCode)
+        // console.log(defaultCode)
         setCode(defaultCode?.boilerplate|| "")
     },[language,setCode])
 

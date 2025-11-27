@@ -15,8 +15,9 @@ const IdleProvider = ({ children }: { children: React.ReactNode }) => {
     const [languageId, setLanguageId] = useState(71)
     const [title, setTitle] = useState("")
     const [desc, setDesc] = useState("")
+    const [openEdit, setOpenEdit] = useState(false)
     return (
-        <IdleContext.Provider value={{ open, language, code, setCode, setLanguage, setOpen, stdin, setStdin, languageId, setLanguageId, stderr, setStderr, stdout, setStdout, postallow, setPostAllow, executeTime, setExecuteTime, title, setTitle, desc, setDesc,openView, setOpenView,id,setId}}>
+        <IdleContext.Provider value={{ open, language, code, setCode, setLanguage, setOpen, stdin, setStdin, languageId, setLanguageId, stderr, setStderr, stdout, setStdout, postallow, setPostAllow, executeTime, setExecuteTime, title, setTitle, desc, setDesc,openView, setOpenView,id,setId, openEdit, setOpenEdit}}>
             {children}
         </IdleContext.Provider>
     )

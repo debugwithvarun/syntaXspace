@@ -7,6 +7,9 @@ interface IdleContextType{
     openView:boolean,
     setOpenView:React.Dispatch<React.SetStateAction<boolean>>,
 
+    openEdit:boolean,
+    setOpenEdit:React.Dispatch<React.SetStateAction<boolean>>,
+
     id:string,
     setId:React.Dispatch<React.SetStateAction<string>>,
 

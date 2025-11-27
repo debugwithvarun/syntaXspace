@@ -10,6 +10,7 @@ const UserSchema = new mongoose.Schema(
     following: { type: [{ username: String, name: String, profilepic:String }], default: [] },
     skills: { type: [String], default: [] },
     profilepic: { type: String, default: "" },
+    verified: { type: Boolean, default: false },
     bio: { type: String, default: "" },
     website: { type: String, default: "" },
     phoneno: { type: String, default: "" },

@@ -103,43 +103,39 @@ PostRouter.route("/run-code").post(async (req, res) => {
 
 PostRouter.route("/save-post").post(async (req, res) => {
   try {
-    const {
-      code,
-      language,
-      languageId,
-      stdin,
-      stdout,
-      stderr,
-      time,
-      title,
-      description,
-    } = req.body;
+    const { code, language, languageId, stdin, stdout, stderr, time, title, description, } = req.body;
     const { username } = req.data;
-
     const isError = stderr.trim() === "" ? false : true;
-
-    const NewPost = new Post({
-      code,
-      language,
-      languageId,
-      stdin,
-      stdout,
-      stderr,
-      time,
-      isError,
-      title,
-      description,
-    });
+    const NewPost = new Post({ code, language, languageId, stdin, stdout, stderr, time, isError, title, description, });
 
     const savedPost = await NewPost.save();
 
-    await User.updateOne(
-      { username: username },
-      { $push: { post: savedPost._id.toString() } }
-    );
+    await User.updateOne({ username: username }, { $push: { post: savedPost._id.toString() } });
 
     return res.status(200).json({ msg: "Code Post Successfull" });
-  } catch (error) {
+  }
+  catch (error) {
+    console.log(error);
+    return res.status(500).json({ msg: "Internal Server Error" });
+  }
+});
+// ======================= EDIT POST ==========================
+
+PostRouter.route("/edit-post").post(async (req, res) => {
+  try {
+    const { code, language, languageId, stdin, stdout, stderr, time, title, description,postId } = req.body;
+    const { username } = req.data;
+    const isError = stderr.trim() === "" ? false : true;
+
+    const postExist=await User.findOne({username:username,post:{$in:[postId]}});
+    if(!postExist){
+      return  res.status(400).json({ msg: "Post Not Found" });
+    }
+    const NewPost = await Post.findByIdAndUpdate(postId, { code, language, languageId, stdin, stdout, stderr, time, isError, title, description, }, { new: false });
+
+    return res.status(200).json({ msg: "Code Edit Successfull" });
+  }
+  catch (error) {
     console.log(error);
     return res.status(500).json({ msg: "Internal Server Error" });
   }
@@ -206,48 +202,48 @@ PostRouter.route("/get-post").get(async (req, res) => {
     const formattedPosts = posts.map((post) => {
       const formattedComments = Array.isArray(post.comment)
         ? post.comment.map((comment) => {
-            const cLikesArr = Array.isArray(comment.likes)
-              ? comment.likes
-              : [];
-            const cLikesCount = cLikesArr.length;
-            const cIsLiked = viewerUsername
-              ? cLikesArr.includes(viewerUsername)
-              : false;
+          const cLikesArr = Array.isArray(comment.likes)
+            ? comment.likes
+            : [];
+          const cLikesCount = cLikesArr.length;
+          const cIsLiked = viewerUsername
+            ? cLikesArr.includes(viewerUsername)
+            : false;
 
-            const formattedReplies = Array.isArray(comment.replies)
-              ? comment.replies.map((reply) => {
-                  const rLikesArr = Array.isArray(reply.likes)
-                    ? reply.likes
-                    : [];
-                  const rLikesCount = rLikesArr.length;
-                  const rIsLiked = viewerUsername
-                    ? rLikesArr.includes(viewerUsername)
-                    : false;
+          const formattedReplies = Array.isArray(comment.replies)
+            ? comment.replies.map((reply) => {
+              const rLikesArr = Array.isArray(reply.likes)
+                ? reply.likes
+                : [];
+              const rLikesCount = rLikesArr.length;
+              const rIsLiked = viewerUsername
+                ? rLikesArr.includes(viewerUsername)
+                : false;
 
-                  return {
-                    _id: reply._id,
-                    username: reply.username,
-                    avatar: avatarMap[reply.username] || "",
-                    text: reply.text,
-                    createdAt: reply.createdAt,
-                    likes: rLikesCount,
-                    isLiked: rIsLiked,
-                  };
-                })
-              : [];
+              return {
+                _id: reply._id,
+                username: reply.username,
+                avatar: avatarMap[reply.username] || "",
+                text: reply.text,
+                createdAt: reply.createdAt,
+                likes: rLikesCount,
+                isLiked: rIsLiked,
+              };
+            })
+            : [];
 
-            return {
-              _id: comment._id,
-              username: comment.username,
-              name: comment.name || "", // if you don't store name, it's fine
-              avatar: avatarMap[comment.username] || "",
-              text: comment.text,
-              createdAt: comment.createdAt,
-              likes: cLikesCount,
-              isLiked: cIsLiked,
-              replies: formattedReplies,
-            };
-          })
+          return {
+            _id: comment._id,
+            username: comment.username,
+            name: comment.name || "", // if you don't store name, it's fine
+            avatar: avatarMap[comment.username] || "",
+            text: comment.text,
+            createdAt: comment.createdAt,
+            likes: cLikesCount,
+            isLiked: cIsLiked,
+            replies: formattedReplies,
+          };
+        })
         : [];
 
       return {
@@ -296,7 +292,7 @@ PostRouter.route("/idle-get").get(async (req, res) => {
     }
 
     const post = await Post.findById(id).select(
-      "code languageId stdin stdout stderr isError language"
+      "code languageId stdin stdout stderr isError language title description"
     );
 
     if (!post) {
@@ -310,6 +306,8 @@ PostRouter.route("/idle-get").get(async (req, res) => {
       success: true,
       message: "Post fetched successfully.",
       data: {
+        title: post.title,
+        description: post.description,
         code: post.code,
         languageId: post.languageId,
         language: post.language,
@@ -420,6 +418,10 @@ PostRouter.route("/delete-post/:postId").delete(async (req, res) => {
 
     // Delete the post document
     const deletedPost = await Post.findByIdAndDelete(postId);
+    await User.updateOne(
+      { username },
+      { $pull: { post: postId } }
+    );
     if (!deletedPost) {
       return res.status(404).json({
         success: false,
@@ -853,23 +855,23 @@ PostRouter.route("/get-comments/:postId").get(async (req, res) => {
 
       const formattedReplies = Array.isArray(comment.replies)
         ? comment.replies.map((reply) => {
-            const rLikesArr = Array.isArray(reply.likes) ? reply.likes : [];
-            const rLikesCount = rLikesArr.length;
-            const rIsLiked = viewerUsername
-              ? rLikesArr.includes(viewerUsername)
-              : false;
+          const rLikesArr = Array.isArray(reply.likes) ? reply.likes : [];
+          const rLikesCount = rLikesArr.length;
+          const rIsLiked = viewerUsername
+            ? rLikesArr.includes(viewerUsername)
+            : false;
 
-            return {
-              _id: reply._id,
-              username: reply.username,
-              avatar: avatarMap[reply.username] || "",
-              text: reply.text,
-              createdAt: reply.createdAt,
-              timeLabel: getTimeLabel(reply.createdAt),
-              likes: rLikesCount,
-              isLiked: rIsLiked,
-            };
-          })
+          return {
+            _id: reply._id,
+            username: reply.username,
+            avatar: avatarMap[reply.username] || "",
+            text: reply.text,
+            createdAt: reply.createdAt,
+            timeLabel: getTimeLabel(reply.createdAt),
+            likes: rLikesCount,
+            isLiked: rIsLiked,
+          };
+        })
         : [];
 
       return {
