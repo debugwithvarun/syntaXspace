@@ -12,6 +12,7 @@ export type MiniUser = {
 }
 
 export type NetworkStats = {
+  verified:boolean
   followersCount: number
   followingCount: number
   postCount: number
@@ -30,6 +31,8 @@ const LeftSection = () => {
       followersCount: 0,
       followingCount: 0,
       postCount:0,
+      verified:false,
+  
       followers: [],
       following: [],
       bio: "",
@@ -46,6 +49,8 @@ const LeftSection = () => {
           // console.log("Network info:", data)
           if (data.success && data.data) {
             setNetworkStats({
+              verified:data.data.verified || false,
+       
               followersCount: data.data.followersCount || 0,
               followingCount: data.data.followingCount || 0,
               postCount:data.data.postCount || 0,

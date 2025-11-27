@@ -61,7 +61,7 @@ const CodeRunner = () => {
       })
 
       const data = await response.json()
-      console.log('run-code result:', data)
+      // console.log('run-code result:', data)
 
       // Save status for UI
       setStatus(data.status || { id: data.status_id, description: data.status_description })

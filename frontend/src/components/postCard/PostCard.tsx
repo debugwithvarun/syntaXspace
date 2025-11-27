@@ -22,7 +22,7 @@ const PostCard: React.FC<PostSummary> = ({
   commentCount,
   timeLabel = "Just now",
 }) => {
-  const { setOpenView, setId } = useIdle()
+  const { setOpenView, setId,setOpenEdit } = useIdle()
   const { username, name } = useAuth()
 
   const [liked, setLiked] = useState(likes)
@@ -50,12 +50,17 @@ const PostCard: React.FC<PostSummary> = ({
     };
   
     fetchComments();
-  }, [_id,isCmnt]); // important dependencies
-  console.log(isCmnt)
+  }, [_id,isCmnt,username]); // important dependencies
+  
 
   const handleOpenView = () => {
     setId(_id)
     setOpenView(true)
+  }
+
+  const handleOpenEdit=()=>{
+    setId(_id)
+    setOpenEdit((prev)=>!prev)
   }
 
   const likeLabel = useMemo(() => {
@@ -73,7 +78,7 @@ const PostCard: React.FC<PostSummary> = ({
     >
      <span className="absolute right-4 top-4" onClick={(e)=>e.stopPropagation()}> <MenuBarEditDelete
   projectName={username}
-
+  handleOpenEdit={handleOpenEdit}
   onConfirmDelete={async () => {
     await fetch(`/api/syntaxspace/delete-post/${_id}`, {
       method: "DELETE",
@@ -83,7 +88,7 @@ const PostCard: React.FC<PostSummary> = ({
   }}
 >
   <EllipsisVertical />
-</MenuBarEditDelete></span>
+</MenuBarEditDelete ></span>
       {/* Title & description */}
       <div className="space-y-1">
         <h3 className="text-base font-semibold tracking-tight text-primary sm:text-lg line-clamp-2">

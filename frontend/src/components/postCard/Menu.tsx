@@ -25,17 +25,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const DEFAULT_PROJECT_NAME = "coss-ui";
 
 type MenuBarEditDeleteProps = {
+  handleOpenEdit:()=>void
   children: React.ReactNode;
-  projectName?: string;
+  projectName: string;
   onConfirmDelete?: () => void | Promise<void>;
 };
 
 export default function MenuBarEditDelete({
+  handleOpenEdit,
   children,
-  projectName = DEFAULT_PROJECT_NAME,
+  projectName ,
   onConfirmDelete,
 }: MenuBarEditDeleteProps) {
   const id = useId();
@@ -73,7 +74,7 @@ export default function MenuBarEditDelete({
       <Button variant="ghost" className="rounded-full shadow-sm">{children}</Button>
     }/>
     <MenuPopup className="shadow-lg rounded-xl py-1 px-2">
-      <MenuItem>
+      <MenuItem onClick={()=>handleOpenEdit()}>
         <PencilIcon className="opacity-70 mr-2" />
         Edit
       </MenuItem>

@@ -3,7 +3,6 @@ import { Card } from "../../ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar"
 import { Button } from "../../ui/button"
 import { Badge } from "@/components/ui/badge"
-
 import {
   Dialog,
   DialogContent,
@@ -12,10 +11,9 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog"
+
 import ImagePath from "@/lib/ImagePath"
 import type { MiniUser, NetworkStats } from "./LeftSection"
-
-
 
 const formatCount = (value: number) => {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
@@ -30,36 +28,41 @@ const getInitials = (fullName?: string) => {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
-const UserList: React.FC<{ users: MiniUser[]; emptyText: string }> = ({
-  users,
-  emptyText,
-}) => {
+type UserListProps = {
+  users: MiniUser[]
+  emptyText: string
+}
+
+const UserList: React.FC<UserListProps> = React.memo(({ users, emptyText }) => {
   if (!users.length) {
     return (
-      <p className="text-sm text-muted-foreground">
-        {emptyText}
-      </p>
+      <div className="flex items-center justify-center py-8">
+        <p className="text-sm text-muted-foreground">{emptyText}</p>
+      </div>
     )
   }
 
   return (
-    <ul className="space-y-6 max-h-72 overflow-y-auto pr-1 scrollbar-none">
+    <ul className="space-y-3 max-h-80 overflow-y-auto">
       {users.map((user) => (
         <li
           key={user.username}
-          className="flex items-center gap-2 text-sm"
+          className="flex items-center gap-3 text-sm p-2 rounded-lg hover:bg-secondary/50 transition-colors"
         >
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={ImagePath(user.profilepic || "")} alt={user.name} />
-            <AvatarFallback>
-              {user.name?.[0]?.toUpperCase() || "U"}
+          <Avatar className="h-10 w-10 shrink-0 border-2 border-background">
+            <AvatarImage
+              src={ImagePath(user.profilepic || "")}
+              alt={user.name || user.username}
+            />
+            <AvatarFallback className="bg-primary/20 text-primary font-semibold">
+              {user.name?.[0]?.toUpperCase() || user.username[0]?.toUpperCase() || "U"}
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col">
-            <span className="font-medium leading-tight">
-              {user.name}
+          <div className="flex flex-col min-w-0 flex-1">
+            <span className="font-semibold leading-tight truncate text-foreground">
+              {user.name || user.username}
             </span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground truncate">
               @{user.username}
             </span>
           </div>
@@ -67,150 +70,174 @@ const UserList: React.FC<{ users: MiniUser[]; emptyText: string }> = ({
       ))}
     </ul>
   )
+})
+UserList.displayName = "UserList"
+
+type StatItemProps = {
+  label: string
+  value: string | number
+  loading: boolean
+  username: string
+  users: MiniUser[]
+  title: string
+  description: string
 }
 
-const ProfileCard = ({ name,username, profilepic, networkStats, loadingStats }:{ name: string; username: string; profilepic?: string; networkStats: NetworkStats; loadingStats: boolean }) => {
+const StatItem: React.FC<StatItemProps> = ({
+  label,
+  value,
+  loading,
+  username,
+  users,
+  title,
+  description,
+}) => (
+  <Dialog>
+    <DialogTrigger asChild>
+      <Button
+        variant="ghost"
+        className="flex flex-col items-center gap-1 py-2 px-4 hover:bg-secondary/50 transition-colors rounded-lg h-auto"
+      >
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </span>
+        <span className="text-xl sm:text-2xl font-bold text-foreground">
+          {loading ? "—" : value}
+        </span>
+      </Button>
+    </DialogTrigger>
+    <DialogContent className="max-w-sm">
+      <DialogHeader>
+        <DialogTitle className="text-lg">{title}</DialogTitle>
+        <DialogDescription className="text-sm">
+          {description.replace("@username", `@${username}`)}
+        </DialogDescription>
+      </DialogHeader>
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      ) : (
+        <UserList users={users} emptyText={`No ${label.toLowerCase()} yet.`} />
+      )}
+    </DialogContent>
+  </Dialog>
+)
+
+type ProfileCardProps = {
+  name: string
+  username: string
+  profilepic?: string
+  networkStats: NetworkStats
+  loadingStats: boolean
+}
+
+const ProfileCardComponent: React.FC<ProfileCardProps> = ({
+  name,
+  username,
+  profilepic,
+  networkStats,
+  loadingStats,
+}) => {
+  const hasSkills = Boolean(networkStats.skills && networkStats.skills.length)
 
   return (
-    <Card className="w-full overflow-hidden rounded-xl border-0 rounded-b-none">
-      {/* Wrapper */}
-      <div className="flex flex-col gap-6 p-4 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
-        {/* Left section: avatar + identity + actions */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center flex-1 min-w-0">
-          {/* Avatar */}
-          <Avatar className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl border-4 border-background shadow-md shrink-0">
-            <AvatarImage src={profilepic} alt={name || "User avatar"} />
-            <AvatarFallback className="text-3xl sm:text-4xl font-semibold">
-              {getInitials(name)}
-            </AvatarFallback>
-          </Avatar>
+    <Card className="w-full overflow-hidden border-0 rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300">
+      <div className="p-4 sm:p-6">
+        {/* Header: Avatar + Info */}
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start">
+          {/* Avatar Section */}
+          <div className="shrink-0">
+            <Avatar className="h-32 w-32 rounded-2xl border-4 border-primary/10 shadow-lg">
+              <AvatarImage src={profilepic} alt={name || "User avatar"} />
+              <AvatarFallback className="text-4xl font-bold bg-primary/20 text-primary">
+                {getInitials(name)}
+              </AvatarFallback>
+            </Avatar>
+          </div>
 
-          {/* Name + subtitle + actions */}
-          <div className="mt-2 space-y-2 sm:mt-0 sm:ml-3 min-w-0">
-            {/* Name + verified */}
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="truncate text-lg font-semibold tracking-tight sm:text-xl md:text-2xl">
-                {name || "User Name"}
-              </h1>
-              <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-[12px] font-semibold uppercase text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
-                verified
-              </span>
+          {/* Name + Verified + Bio */}
+          <div className="flex-1 min-w-0 space-y-3">
+            {/* Name + Verified Badge */}
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground truncate">
+                  {name || "User Name"}
+                </h1>
+                {networkStats.verified && (
+                  <Badge className="bg-blue-500/15 text-blue-600 dark:text-blue-300 border-0 text-xs font-bold uppercase">
+                    ✓ Verified
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground font-medium">@{username}</p>
             </div>
 
-            {/* Subtitle */}
-            <p className="max-w-md text-sm text-muted-foreground">
-              {networkStats.bio || "Interface and Brand Designer based in San Antonio"}
+            {/* Bio */}
+            {networkStats.bio && (
+              <p className="text-sm text-foreground leading-relaxed max-w-md">
+                {networkStats.bio}
+              </p>
+            )}
+
+            {/* Stats Row */}
+            <div className="flex gap-2 pt-2">
+              <StatItem
+                label="Posts"
+                value={formatCount(networkStats.postCount || 0)}
+                loading={loadingStats}
+                username={username}
+                users={[]}
+                title="Posts"
+                description={`${name} has shared @username`}
+              />
+              <StatItem
+                label="Followers"
+                value={formatCount(networkStats.followersCount)}
+                loading={loadingStats}
+                username={username}
+                users={networkStats.followers}
+                title="Followers"
+                description="People following @username"
+              />
+              <StatItem
+                label="Following"
+                value={formatCount(networkStats.followingCount)}
+                loading={loadingStats}
+                username={username}
+                users={networkStats.following}
+                title="Following"
+                description="People @username is following"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Skills Section */}
+        {hasSkills && (
+          <div className="mt-6 pt-6 border-t border-border">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+              Skills & Interests
             </p>
-
-            {/* Actions */}
-              {/* <div className="flex flex-wrap gap-2 pt-2">
-                <Button
-                  size="sm"
+            <div className="flex flex-wrap gap-2">
+              {networkStats.skills!.map((skill) => (
+                <Badge
+                  key={skill}
                   variant="secondary"
-                  className="w-full sm:w-auto"
+                  className="px-3 py-1 text-xs font-medium hover:bg-primary/20 transition-colors"
                 >
-                  Follow
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                >
-                  Get in touch
-                </Button>
-              </div> */}
+                  {skill}
+                </Badge>
+              ))}
+            </div>
           </div>
-        </div>
-
-        {/* Right section: badges + stats */}
-        <div className="flex flex-col gap-4 w-full lg:w-auto lg:items-end">
-          {/* Badges */}
-          <div className="flex flex-wrap gap-2 justify-start lg:justify-end">
-            {networkStats.skills && networkStats.skills.map((skill) => (
-              <Badge key={skill} className="bg-secondary">{skill}</Badge>
-            ))}
-          </div>
-
-          {/* Stats (with dialog triggers) */}
-          <div className="grid grid-cols-2 gap-3 text-center sm:gap-6 sm:text-right">
-            {/* Followers dialog */}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="flex flex-col items-center sm:items-end h-auto px-1 sm:px-2 py-1 sm:py-2"
-                >
-                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    Followers
-                  </p>
-                  <p className="text-lg font-semibold leading-tight sm:text-xl md:text-2xl">
-                    {loadingStats ? "—" : formatCount(networkStats.followersCount)}
-                  </p>
-                  <span className="text-[11px] text-muted-foreground mt-0.5">
-                    View all
-                  </span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Followers</DialogTitle>
-                  <DialogDescription>
-                    People who are following @{username}
-                  </DialogDescription>
-                </DialogHeader>
-
-                {loadingStats ? (
-                  <p className="text-sm text-muted-foreground">Loading...</p>
-                ) : (
-                  <UserList
-                    users={networkStats.followers}
-                    emptyText="No followers yet."
-                  />
-                )}
-              </DialogContent>
-            </Dialog>
-
-            {/* Following dialog */}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="flex flex-col items-center sm:items-end h-auto px-1 sm:px-2 py-1 sm:py-2"
-                >
-                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    Following
-                  </p>
-                  <p className="text-lg font-semibold leading-tight sm:text-xl md:text-2xl">
-                    {loadingStats ? "—" : formatCount(networkStats.followingCount)}
-                  </p>
-                  <span className="text-[11px] text-muted-foreground mt-0.5">
-                    View all
-                  </span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Following</DialogTitle>
-                  <DialogDescription>
-                    People @{username} is following
-                  </DialogDescription>
-                </DialogHeader>
-
-                {loadingStats ? (
-                  <p className="text-sm text-muted-foreground">Loading...</p>
-                ) : (
-                  <UserList
-                    users={networkStats.following}
-                    emptyText="Not following anyone yet."
-                  />
-                )}
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
+        )}
       </div>
     </Card>
   )
 }
+
+const ProfileCard = React.memo(ProfileCardComponent)
+ProfileCard.displayName = "ProfileCard"
 
 export default ProfileCard
