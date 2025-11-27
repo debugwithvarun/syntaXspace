@@ -14,7 +14,7 @@ const postSchema = new mongoose.Schema(
     isError: { type: Boolean, required: true },
 
     likes: { type: [String], default: [] },
-
+  
     comment: {
           type: [{userID: String, username: {type:String,required:true,trim:true},likes:{type:[String],default:[]}, text:{type:String,trim:true},replies:[{username:String,text:String,likes:{type:[String],default:[]},userID:String}], createdAt:{type:Date,default:Date.now} }],
       default: []

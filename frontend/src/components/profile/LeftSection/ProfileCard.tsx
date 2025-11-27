@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect, useState, useCallback } from "react"
 import { Card } from "../../ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar"
 import { Button } from "../../ui/button"
@@ -12,8 +12,22 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog"
+
+import { UserPlus, Mail } from "lucide-react"
 import ImagePath from "@/lib/ImagePath"
 import type { MiniUser, NetworkStats } from "./LeftSection"
+import { useAuth } from "@/hooks/useAuth"
 
 const formatCount = (value: number) => {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
@@ -36,33 +50,33 @@ type UserListProps = {
 const UserList: React.FC<UserListProps> = React.memo(({ users, emptyText }) => {
   if (!users.length) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <p className="text-sm text-muted-foreground">{emptyText}</p>
+      <div className="flex items-center justify-center py-6">
+        <p className="text-xs text-muted-foreground">{emptyText}</p>
       </div>
     )
   }
 
   return (
-    <ul className="space-y-3 max-h-80 overflow-y-auto">
+    <ul className="space-y-2.5 max-h-80 overflow-y-auto">
       {users.map((user) => (
         <li
           key={user.username}
-          className="flex items-center gap-3 text-sm p-2 rounded-lg hover:bg-secondary/50 transition-colors"
+          className="flex items-center gap-2.5 text-xs p-2 rounded-md hover:bg-secondary/50 transition-colors"
         >
-          <Avatar className="h-10 w-10 shrink-0 border-2 border-background">
+          <Avatar className="h-8 w-8 shrink-0 border border-border">
             <AvatarImage
               src={ImagePath(user.profilepic || "")}
               alt={user.name || user.username}
             />
-            <AvatarFallback className="bg-primary/20 text-primary font-semibold">
+            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
               {user.name?.[0]?.toUpperCase() || user.username[0]?.toUpperCase() || "U"}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="font-semibold leading-tight truncate text-foreground">
+            <span className="font-medium leading-tight truncate text-foreground">
               {user.name || user.username}
             </span>
-            <span className="text-xs text-muted-foreground truncate">
+            <span className="text-[11px] text-muted-foreground truncate">
               @{user.username}
             </span>
           </div>
@@ -96,26 +110,26 @@ const StatItem: React.FC<StatItemProps> = ({
     <DialogTrigger asChild>
       <Button
         variant="ghost"
-        className="flex flex-col items-center gap-1 py-2 px-4 hover:bg-secondary/50 transition-colors rounded-lg h-auto"
+        className="h-auto px-3 py-1.5 rounded-lg flex flex-col items-start gap-0.5 hover:bg-secondary/60"
       >
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <span className="text-[10px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
           {label}
         </span>
-        <span className="text-xl sm:text-2xl font-bold text-foreground">
+        <span className="text-sm font-semibold text-foreground">
           {loading ? "—" : value}
         </span>
       </Button>
     </DialogTrigger>
     <DialogContent className="max-w-sm">
       <DialogHeader>
-        <DialogTitle className="text-lg">{title}</DialogTitle>
-        <DialogDescription className="text-sm">
+        <DialogTitle className="text-sm font-semibold">{title}</DialogTitle>
+        <DialogDescription className="text-xs">
           {description.replace("@username", `@${username}`)}
         </DialogDescription>
       </DialogHeader>
       {loading ? (
-        <div className="flex items-center justify-center py-8">
-          <p className="text-sm text-muted-foreground">Loading...</p>
+        <div className="flex items-center justify-center py-6">
+          <p className="text-xs text-muted-foreground">Loading...</p>
         </div>
       ) : (
         <UserList users={users} emptyText={`No ${label.toLowerCase()} yet.`} />
@@ -129,65 +143,165 @@ type ProfileCardProps = {
   loadingStats: boolean
 }
 
-const ProfileCardComponent: React.FC<ProfileCardProps> = ({
+type InviteStatus = "idle" | "sent" | "already" | "loading"
 
+const ProfileCardComponent: React.FC<ProfileCardProps> = ({
   networkStats,
   loadingStats,
 }) => {
   const hasSkills = Boolean(networkStats.skills && networkStats.skills.length)
 
+  const { username } = useAuth()
+  const isOwnProfile = username === networkStats.username
+  const [inviteStatus, setInviteStatus] = useState<InviteStatus>("loading")
+  const [actionLoading, setActionLoading] = useState(false)
+
+  const targetUsername = networkStats.username
+
+  const fetchStatus = useCallback(async () => {
+    if (!targetUsername || isOwnProfile) {
+      setInviteStatus("idle")
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/check-status/${targetUsername}`, {
+        method: "GET",
+        credentials: "include",
+      })
+      if (!res.ok) throw new Error("Failed to fetch status")
+      const data = await res.json()
+      if (data?.status === "already" || data?.status === "sent" || data?.status === "idle") {
+        setInviteStatus(data.status)
+      } else {
+        setInviteStatus("idle")
+      }
+    } catch (error) {
+      console.error("Error fetching invite status:", error)
+      setInviteStatus("idle")
+    }
+  }, [targetUsername, isOwnProfile])
+
+  useEffect(() => {
+    setInviteStatus("loading")
+    fetchStatus()
+  }, [fetchStatus])
+
+  // For Invite / Cancel request
+  const handleInviteClick = async () => {
+    if (isOwnProfile || !targetUsername || inviteStatus === "loading") return
+    if (inviteStatus === "already") return // handled via dialog
+
+    setActionLoading(true)
+    try {
+      if (inviteStatus === "idle") {
+        const res = await fetch(`/api/sent-request`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ target: targetUsername }),
+        })
+        if (!res.ok) throw new Error("Failed to send request")
+        setInviteStatus("sent")
+      } else if (inviteStatus === "sent") {
+        const res = await fetch(`/api/delete-sent-request/${targetUsername}`, {
+          method: "DELETE",
+          credentials: "include",
+        })
+        if (!res.ok) throw new Error("Failed to cancel request")
+        setInviteStatus("idle")
+      }
+    } catch (error) {
+      console.error("Error updating invite status:", error)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  // For Unfollow (status === "already") – triggered from AlertDialogAction
+  const handleUnfollow = async () => {
+    if (isOwnProfile || !targetUsername) return
+
+    setActionLoading(true)
+    try {
+      const res = await fetch(`/api/remove-following/${targetUsername}`, {
+        method: "DELETE",
+        credentials: "include",
+      })
+      if (!res.ok) throw new Error("Failed to unfollow")
+      setInviteStatus("idle")
+    } catch (error) {
+      console.error("Error unfollowing user:", error)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const inviteLabel = (() => {
+    if (inviteStatus === "sent") return "Invite sent"
+    if (inviteStatus === "already") return "Following"
+    return "Invite"
+  })()
+
+  const inviteVariant: "default" | "outline" =
+    inviteStatus === "idle" || inviteStatus === "loading" ? "default" : "outline"
+
   return (
-    <Card className="w-full overflow-hidden border-0 rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300">
-      <div className="p-4 sm:p-6">
-        {/* Header: Avatar + Info */}
-        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start">
-          {/* Avatar Section */}
+    <Card className="w-full overflow-hidden border-0 rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
+      <div className="p-4 sm:p-5">
+        {/* Top section: avatar + info in row, content in column */}
+        <div className="flex gap-4 sm:gap-5 items-start">
+          {/* Avatar */}
           <div className="shrink-0">
-            <Avatar className="h-32 w-32 rounded-2xl border-4 border-primary/10 shadow-lg">
-              <AvatarImage src={networkStats.profilepic} alt={networkStats.name || "User avatar"} />
-              <AvatarFallback className="text-4xl font-bold bg-primary/20 text-primary">
+            <Avatar className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl border-2 border-primary/10 shadow-sm">
+              <AvatarImage
+                src={networkStats.profilepic}
+                alt={networkStats.name || "User avatar"}
+              />
+              <AvatarFallback className="text-xl sm:text-2xl font-semibold bg-primary/10 text-primary">
                 {getInitials(networkStats.name)}
               </AvatarFallback>
             </Avatar>
           </div>
 
-          {/* Name + Verified + Bio */}
-          <div className="flex-1 min-w-0 space-y-3">
-            {/* Name + Verified Badge */}
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground truncate">
+          {/* Right side: name, about, stats, actions */}
+          <div className="flex-1 min-w-0 flex flex-col gap-2">
+            {/* Name + verified + username */}
+            <div className="space-y-0.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <h1 className="text-base sm:text-lg font-semibold tracking-tight text-foreground truncate">
                   {networkStats.name || "User Name"}
                 </h1>
                 {networkStats.verified && (
-                  <Badge className="bg-blue-500/15 text-blue-600 dark:text-blue-300 border-0 text-xs font-bold uppercase">
+                  <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-300 border-0 text-[10px] font-semibold uppercase tracking-[0.08em]">
                     ✓ Verified
                   </Badge>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground font-medium">@{networkStats.username}</p>
+              <p className="text-xs text-muted-foreground font-medium">
+                @{networkStats.username}
+              </p>
             </div>
 
-            {/* Bio */}
+            {/* About/Bio */}
             {networkStats.bio && (
-              <p className="text-sm text-foreground leading-relaxed max-w-md">
+              <p className="text-xs text-foreground leading-relaxed max-w-md">
                 {networkStats.bio}
               </p>
             )}
 
-            {/* Stats Row */}
-            <div className="flex gap-2 pt-2">
-            <Button
-        variant="ghost"
-        className="flex flex-col items-center gap-1 py-2 px-4 hover:bg-secondary/50 transition-colors rounded-lg h-auto"
-      >
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Post
-              </span>
-              <span className="text-xl sm:text-2xl font-bold text-foreground">
-                {networkStats.postCount || 0}
-              </span>
-           
+            {/* Stats in ONE row: Post | Followers | Following */}
+            <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs">
+              <Button
+                variant="ghost"
+                className="h-auto px-3 py-1.5 rounded-lg flex flex-col items-start gap-0.5 hover:bg-secondary/60"
+              >
+                <span className="text-[10px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
+                  Posts
+                </span>
+                <span className="text-sm font-semibold text-foreground">
+                  {networkStats.postCount || 0}
+                </span>
               </Button>
               <StatItem
                 label="Followers"
@@ -208,21 +322,77 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
                 description="People @username is following"
               />
             </div>
+
+            {/* Actions: Invite + Get in touch */}
+            {!isOwnProfile && (
+              <div className="mt-1.5 flex flex-wrap gap-2">
+                {inviteStatus === "already" ? (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        variant={inviteVariant}
+                        className="rounded-full px-3 h-8 text-xs"
+                        disabled={actionLoading}
+                      >
+                        <UserPlus className="h-3.5 w-3.5 mr-1.5" />
+                        {inviteLabel}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Unfollow user</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to unfollow{" "}
+                          <b>@{networkStats.username}</b>? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleUnfollow}>
+                          Yes, unfollow
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant={inviteVariant}
+                    className="rounded-full px-3 h-8 text-xs"
+                    onClick={handleInviteClick}
+                    disabled={actionLoading || inviteStatus === "loading"}
+                  >
+                    <UserPlus className="h-3.5 w-3.5 mr-1.5" />
+                    {inviteLabel}
+                  </Button>
+                )}
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-full px-3 h-8 text-xs"
+                >
+                  <Mail className="h-3.5 w-3.5 mr-1.5" />
+                  Get in touch
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Skills Section */}
+        {/* Skills */}
         {hasSkills && (
-          <div className="mt-6 pt-6 border-t border-border">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          <div className="mt-4 pt-4 border-t border-border">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-2">
               Skills & Interests
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {networkStats.skills!.map((skill) => (
                 <Badge
                   key={skill}
                   variant="secondary"
-                  className="px-3 py-1 text-xs font-medium hover:bg-primary/20 transition-colors"
+                  className="px-2.5 py-1 text-[11px] font-medium hover:bg-primary/10"
                 >
                   {skill}
                 </Badge>
