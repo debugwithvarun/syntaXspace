@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { useAuth } from "@/hooks/useAuth"
+
 import { Badge } from "@/components/ui/badge"
 
 type AboutData = {
@@ -15,8 +15,12 @@ type AboutData = {
   profilepic?: string
 }
 
-const AboutSection: React.FC = () => {
-  const { username } = useAuth()
+type AboutProps={
+  username:string
+}
+
+const AboutSection: React.FC<AboutProps> = ({username}) => {
+
   const [about, setAbout] = useState<AboutData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

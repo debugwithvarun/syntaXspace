@@ -2,20 +2,22 @@ import EditFrame from "@/components/idle/EditFrame"
 import MainFrame from "@/components/idle/MainFrame"
 import ViewFrame from "@/components/idle/ViewFrame"
 import { useIdle } from "@/hooks/useIdle"
+import { useEffect } from "react"
 
 
 
 const IdleDashboard = () => {
-  const {openView,open,openEdit}=useIdle()
-  // useEffect(()=>{
-  //   setTitle("")
-  //   setDesc("")
-  //   // setLanguage("python")
- 
-  //   setStdin("")
-  //   setStdout("")
+  const {openView,open,openEdit,setStderr,setStdin,setStdout,setDesc,setTitle}=useIdle()
+  useEffect(()=>{
+   
+    // setLanguage("python")
+    setStderr("")
+    setStdin("")
+    setStdout("")
+    setDesc("")
+    setTitle("")
 
-  // },[setDesc,setStdin,setTitle,setStdout])
+  },[setStderr,setStdin,setStdout,setTitle,setDesc])
 
   return (
   

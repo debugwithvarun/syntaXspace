@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react"
 
-import { useAuth } from "@/hooks/useAuth"
 import PostCard from "@/components/postCard/PostCard"
 
 
@@ -11,7 +10,7 @@ export type PostSummary = {
   commentCount: number
   likes:string[]
   setIsDlt:React.Dispatch<React.SetStateAction<boolean>>;
-
+  username:string,
   likes_count: number
   timeLabel:string
 }
@@ -22,8 +21,11 @@ interface PostsResponse {
   data?: PostSummary[]
 }
 
-const PostSection: React.FC = () => {
-  const { username } = useAuth()
+type PostProps={
+  username:string
+}
+const PostSection: React.FC<PostProps> = ({username}) => {
+
   const [posts, setPosts] = useState<PostSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -44,7 +46,7 @@ useEffect(() => {
     setError(null)
 
     try {
-      const res = await fetch("/api/syntaxspace/get-post", {
+      const res = await fetch(`/api/syntaxspace/get-post/${username}`, {
         signal: controller.signal,
       })
 
@@ -113,7 +115,7 @@ useEffect(() => {
           description={post.description}
           likes_count={post.likes_count}
           likes={post.likes}
-     
+          username={username}
           commentCount={post.commentCount}
           timeLabel={post.timeLabel}
         />

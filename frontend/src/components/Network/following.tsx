@@ -20,6 +20,7 @@ import { ScrollArea } from "../ui/scroll-area";
 import ProfileShimmer from "../Skelton/ProfileShimmer";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import ImagePath from "@/lib/ImagePath";
+import { Link } from "react-router-dom";
 
 const Followers = () => {
   const [people, setPeople] = React.useState<{ username: string; name: string; _id: string,profilepic:string }[]>([]);
@@ -142,8 +143,10 @@ const Followers = () => {
                       </Avatar>
                     </ItemMedia>
                     <ItemContent className="gap-1">
+                    <Link to={`/community/${person.username}`}>
                       <ItemTitle>{person.name}</ItemTitle>
                       <ItemDescription>@{person.username}</ItemDescription>
+                    </Link>
                     </ItemContent>
                     <ItemGroup className="flex gap-2 flex-row">
 

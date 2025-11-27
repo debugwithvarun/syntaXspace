@@ -19,7 +19,7 @@ export default function ProfileTitle() {
         <div className="space-y-0.5 ">
           <HoverCardTrigger asChild>
             <p>
-              <Link className="text-sm font-medium hover:underline " to="/">
+              <Link className="text-sm font-medium hover:underline " to={`/profile/${username}`}>
                 {name}
               </Link>
             </p>

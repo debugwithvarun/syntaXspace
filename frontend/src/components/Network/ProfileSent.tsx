@@ -22,6 +22,7 @@ import {
 import usePop from "@/hooks/usePop"
 import ProfileShimmer from "../Skelton/ProfileShimmer"
 import ImagePath from "@/lib/ImagePath"
+import { Link } from "react-router-dom"
 
 // const people = [
 //     {
@@ -154,8 +155,10 @@ export function ProfileSent() {
                                             </Avatar>
                                         </ItemMedia>
                                         <ItemContent className="gap-1">
-                                            <ItemTitle>{person.name}</ItemTitle>
-                                            <ItemDescription>@{person.username}</ItemDescription>
+                                            <Link to={`/community/${person.username}`}>
+                                                <ItemTitle>{person.name}</ItemTitle>
+                                                <ItemDescription>@{person.username}</ItemDescription>
+                                            </Link>
                                         </ItemContent>
                                         <ItemGroup className="flex gap-2 flex-row">
                                             <Button variant="destructive" className="rounded-xl "

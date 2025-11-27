@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import usePop from "@/hooks/usePop";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ImagePath from "@/lib/ImagePath";
+import { Link } from "react-router-dom";
 
 export default function PeopleYouMayKnow({
   rcmd,
@@ -84,12 +85,12 @@ export default function PeopleYouMayKnow({
 
         <div className="space-y-0.5">
           <p>
-            <a
+            <Link
               className="text-sm font-medium hover:underline"
-              href="#"
+              to={`/community/${rcmd.username}`}
             >
               {rcmd.name}
-            </a>
+            </Link>
           </p>
           <p className="text-xs text-muted-foreground">@{rcmd.username}</p>
         </div>

@@ -11,7 +11,7 @@ const tabTriggerClass =
   'data-[state=active]:bg-transparent data-[state=active]:shadow-none ' +
   'data-[state=active]:text-foreground data-[state=active]:after:bg-primary data-[state=active]:after:scale-x-100'
 
-const TabSection = ({postCount}:{postCount:number}) => {
+const TabSection = ({postCount,username}:{postCount:number,username:string}) => {
   return (
     <Tabs defaultValue="work" className="w-full">
       <TabsList className="flex w-full justify-start gap-4 rounded-none rounded-b-xl  border-b bg-background px-6 py-1">
@@ -31,7 +31,7 @@ const TabSection = ({postCount}:{postCount:number}) => {
       {/* Work */}
       
       <TabsContent value="work">
-        <PostSection/>
+        <PostSection username={username}/>
       </TabsContent>
 
 
@@ -46,7 +46,7 @@ const TabSection = ({postCount}:{postCount:number}) => {
       {/* About */}
       <TabsContent value="about">
        
-          <AboutSection />
+          <AboutSection username={username} />
      
       </TabsContent>
     </Tabs>
