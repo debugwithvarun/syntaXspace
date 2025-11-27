@@ -80,7 +80,7 @@ PostRouter.route("/run-code").post(async (req, res) => {
       }
     }
     if (isSuccess) {
-      finalStderr = ""; // very important
+      finalStderr = "";
     }
 
     const normalized = {
@@ -100,48 +100,128 @@ PostRouter.route("/run-code").post(async (req, res) => {
 });
 
 // ======================= SAVE POST ==========================
-
 PostRouter.route("/save-post").post(async (req, res) => {
   try {
-    const { code, language, languageId, stdin, stdout, stderr, time, title, description, } = req.body;
+    const {
+      code,
+      language,
+      languageId,
+      stdin,
+      stdout,
+      stderr,
+      time,
+      title,
+      description,
+    } = req.body;
     const { username } = req.data;
+
     const isError = stderr.trim() === "" ? false : true;
-    const NewPost = new Post({ code, language, languageId, stdin, stdout, stderr, time, isError, title, description, });
+
+    const NewPost = new Post({
+      code,
+      language,
+      languageId,
+      stdin,
+      stdout,
+      stderr,
+      time,
+      isError,
+      title,
+      description,
+    });
 
     const savedPost = await NewPost.save();
 
-    await User.updateOne({ username: username }, { $push: { post: savedPost._id.toString() } });
+    // ✅ add to author's post array
+    await User.updateOne(
+      { username: username },
+      { $push: { post: savedPost._id } }
+    );
+
+    // ✅ add to author's own feed
+    await User.updateOne(
+      { username: username },
+      { $addToSet: { feeds: savedPost._id } }
+    );
+
+    // ✅ add to all followers' feeds
+    const author = await User.findOne(
+      { username },
+      { follower: 1, _id: 0 }
+    );
+
+    if (author && Array.isArray(author.follower) && author.follower.length > 0) {
+      const followerUsernames = author.follower
+        .map((f) => f.username)
+        .filter(Boolean);
+
+      if (followerUsernames.length > 0) {
+        await User.updateMany(
+          { username: { $in: followerUsernames } },
+          { $addToSet: { feeds: savedPost._id } }
+        );
+      }
+    }
 
     return res.status(200).json({ msg: "Code Post Successfull" });
-  }
-  catch (error) {
+  } catch (error) {
     console.log(error);
     return res.status(500).json({ msg: "Internal Server Error" });
   }
 });
-// ======================= EDIT POST ==========================
 
+// ======================= EDIT POST ==========================
 PostRouter.route("/edit-post").post(async (req, res) => {
   try {
-    const { code, language, languageId, stdin, stdout, stderr, time, title, description,postId } = req.body;
+    const {
+      code,
+      language,
+      languageId,
+      stdin,
+      stdout,
+      stderr,
+      time,
+      title,
+      description,
+      postId,
+    } = req.body;
     const { username } = req.data;
     const isError = stderr.trim() === "" ? false : true;
 
-    const postExist=await User.findOne({username:username,post:{$in:[postId]}});
-    if(!postExist){
-      return  res.status(400).json({ msg: "Post Not Found" });
+    const postExist = await User.findOne({
+      username: username,
+      post: { $in: [postId] },
+    });
+    if (!postExist) {
+      return res.status(400).json({ msg: "Post Not Found" });
     }
-    const NewPost = await Post.findByIdAndUpdate(postId, { code, language, languageId, stdin, stdout, stderr, time, isError, title, description, }, { new: false });
+
+    await Post.findByIdAndUpdate(
+      postId,
+      {
+        code,
+        language,
+        languageId,
+        stdin,
+        stdout,
+        stderr,
+        time,
+        isError,
+        title,
+        description,
+      },
+      { new: false }
+    );
 
     return res.status(200).json({ msg: "Code Edit Successfull" });
-  }
-  catch (error) {
+  } catch (error) {
     console.log(error);
     return res.status(500).json({ msg: "Internal Server Error" });
   }
 });
 
 // ======================= GET POSTS (WITH COMMENTS) ==========================
+// (unchanged from your version – kept as-is)
 PostRouter.route("/get-post/:username").get(async (req, res) => {
   try {
     const viewerUsername = req.params.username;
@@ -153,7 +233,9 @@ PostRouter.route("/get-post/:username").get(async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ username: viewerUsername }).select("post");
+    const user = await User.findOne({ username: viewerUsername }).select(
+      "post"
+    );
 
     if (!user) {
       return res.status(404).json({
@@ -177,7 +259,6 @@ PostRouter.route("/get-post/:username").get(async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    // collect usernames for avatars (comments + replies)
     const usernames = new Set();
     posts.forEach((post) => {
       post?.comment?.forEach((c) => {
@@ -201,55 +282,55 @@ PostRouter.route("/get-post/:username").get(async (req, res) => {
     const formattedPosts = posts.map((post) => {
       const formattedComments = Array.isArray(post.comment)
         ? post.comment.map((comment) => {
-          const cLikesArr = Array.isArray(comment.likes)
-            ? comment.likes
-            : [];
-          const cLikesCount = cLikesArr.length;
-          const cIsLiked = viewerUsername
-            ? cLikesArr.includes(viewerUsername)
-            : false;
+            const cLikesArr = Array.isArray(comment.likes)
+              ? comment.likes
+              : [];
+            const cLikesCount = cLikesArr.length;
+            const cIsLiked = viewerUsername
+              ? cLikesArr.includes(viewerUsername)
+              : false;
 
-          const formattedReplies = Array.isArray(comment.replies)
-            ? comment.replies.map((reply) => {
-              const rLikesArr = Array.isArray(reply.likes)
-                ? reply.likes
-                : [];
-              const rLikesCount = rLikesArr.length;
-              const rIsLiked = viewerUsername
-                ? rLikesArr.includes(viewerUsername)
-                : false;
+            const formattedReplies = Array.isArray(comment.replies)
+              ? comment.replies.map((reply) => {
+                  const rLikesArr = Array.isArray(reply.likes)
+                    ? reply.likes
+                    : [];
+                  const rLikesCount = rLikesArr.length;
+                  const rIsLiked = viewerUsername
+                    ? rLikesArr.includes(viewerUsername)
+                    : false;
 
-              return {
-                _id: reply._id,
-                username: reply.username,
-                avatar: avatarMap[reply.username] || "",
-                text: reply.text,
-                createdAt: reply.createdAt,
-                likes: rLikesCount,
-                isLiked: rIsLiked,
-              };
-            })
-            : [];
+                  return {
+                    _id: reply._id,
+                    username: reply.username,
+                    avatar: avatarMap[reply.username] || "",
+                    text: reply.text,
+                    createdAt: reply.createdAt,
+                    likes: rLikesCount,
+                    isLiked: rIsLiked,
+                  };
+                })
+              : [];
 
-          return {
-            _id: comment._id,
-            username: comment.username,
-            name: comment.name || "", // if you don't store name, it's fine
-            avatar: avatarMap[comment.username] || "",
-            text: comment.text,
-            createdAt: comment.createdAt,
-            likes: cLikesCount,
-            isLiked: cIsLiked,
-            replies: formattedReplies,
-          };
-        })
+            return {
+              _id: comment._id,
+              username: comment.username,
+              name: comment.name || "",
+              avatar: avatarMap[comment.username] || "",
+              text: comment.text,
+              createdAt: comment.createdAt,
+              likes: cLikesCount,
+              isLiked: cIsLiked,
+              replies: formattedReplies,
+            };
+          })
         : [];
 
       return {
         _id: post._id,
         title: post.title,
         description: post.description,
-        likes: post.likes, // still array of usernames at post level
+        likes: post.likes,
         comment: formattedComments,
         commentCount: Array.isArray(post.comment) ? post.comment.length : 0,
         likes_count: Array.isArray(post.likes) ? post.likes.length : 0,
@@ -272,6 +353,7 @@ PostRouter.route("/get-post/:username").get(async (req, res) => {
 });
 
 // ======================= IDLE GET (OPEN IN EDITOR) ==========================
+// (unchanged)
 PostRouter.route("/idle-get").get(async (req, res) => {
   try {
     const { id } = req.query;
@@ -326,6 +408,7 @@ PostRouter.route("/idle-get").get(async (req, res) => {
 });
 
 // ======================= POST LIKE (TOP LEVEL POST) ==========================
+// (unchanged)
 PostRouter.route("/post-like/:postId").post(async (req, res) => {
   try {
     const { postId } = req.params;
@@ -366,7 +449,6 @@ PostRouter.route("/post-like/:postId").post(async (req, res) => {
   }
 });
 
-
 // ======================= DELETE POST ==========================
 PostRouter.route("/delete-post/:postId").delete(async (req, res) => {
   try {
@@ -394,7 +476,6 @@ PostRouter.route("/delete-post/:postId").delete(async (req, res) => {
       });
     }
 
-    // Find the user
     const user = await User.findOne({ username }).select("post");
     if (!user) {
       return res.status(404).json({
@@ -403,7 +484,6 @@ PostRouter.route("/delete-post/:postId").delete(async (req, res) => {
       });
     }
 
-    // Check ownership: postId must exist in user's post array
     const ownsPost = user.post.some(
       (id) => id.toString() === postId.toString()
     );
@@ -415,12 +495,7 @@ PostRouter.route("/delete-post/:postId").delete(async (req, res) => {
       });
     }
 
-    // Delete the post document
     const deletedPost = await Post.findByIdAndDelete(postId);
-    await User.updateOne(
-      { username },
-      { $pull: { post: postId } }
-    );
     if (!deletedPost) {
       return res.status(404).json({
         success: false,
@@ -428,10 +503,16 @@ PostRouter.route("/delete-post/:postId").delete(async (req, res) => {
       });
     }
 
-    // Remove post reference from user document
+    // remove post reference from author's post array
     await User.updateOne(
       { username },
       { $pull: { post: postId } }
+    );
+
+    // ✅ remove this post from EVERYONE's feeds
+    await User.updateMany(
+      { feeds: postId },
+      { $pull: { feeds: postId } }
     );
 
     return res.status(200).json({
@@ -448,8 +529,8 @@ PostRouter.route("/delete-post/:postId").delete(async (req, res) => {
   }
 });
 
+// ======================= COMMENTS / REPLIES / LIKES / FETCH ==========================
 
-// ======================= ADD COMMENT ==========================
 PostRouter.route("/add-comment").post(async (req, res) => {
   try {
     const { username, text, postId, userID } = req.body;
@@ -894,6 +975,164 @@ PostRouter.route("/get-comments/:postId").get(async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching comments:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+});
+
+
+// ======================= GET FEED (BASED ON POST.createdAt) ==========================
+PostRouter.route("/feed").get(async (req, res) => {
+  try {
+    const { username } = req.data || {};
+
+    if (!username) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: username not found in auth data",
+      });
+    }
+
+    // Get user's feed post ids
+    const userDoc = await User.findOne({ username }).select("feeds");
+
+    if (!userDoc || !Array.isArray(userDoc.feeds) || userDoc.feeds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No posts in feed.",
+        data: [],
+      });
+    }
+
+    // Fetch posts by those ids, sorted by actual createdAt
+    const posts = await Post.find({ _id: { $in: userDoc.feeds } })
+      .select("title description likes comment createdAt language")
+      .sort({ createdAt: -1 }) // real post.createdAt, not feeds order
+      .lean();
+
+    const viewerUsername = username;
+
+    // --------- AUTHOR INFO (username, name, profilepic) ----------
+    const postIds = posts.map((p) => p._id);
+
+    // Find all users who own any of these posts
+    const authorDocs = await User.find(
+      { post: { $in: postIds } },
+      { username: 1, name: 1, profilepic: 1, post: 1 }
+    ).lean();
+
+    // Map: postId -> { username, name, profilepic }
+    const authorMap = {};
+    authorDocs.forEach((u) => {
+      (u.post || []).forEach((pid) => {
+        authorMap[pid.toString()] = {
+          username: u.username,
+          name: u.name,
+          profilepic: u.profilepic || "",
+        };
+      });
+    });
+
+    // --------- AVATARS FOR COMMENTS / REPLIES ----------
+    const usernames = new Set();
+    posts.forEach((post) => {
+      post?.comment?.forEach((c) => {
+        if (c?.username) usernames.add(c.username);
+        c?.replies?.forEach((r) => {
+          if (r?.username) usernames.add(r.username);
+        });
+      });
+    });
+
+    const avatarData = await User.find(
+      { username: { $in: Array.from(usernames) } },
+      { username: 1, profilepic: 1 }
+    );
+
+    const avatarMap = {};
+    avatarData.forEach((u) => {
+      avatarMap[u.username] = u.profilepic || "";
+    });
+
+    const formatted = posts.map((post) => {
+      const formattedComments = Array.isArray(post.comment)
+        ? post.comment.map((comment) => {
+            const cLikesArr = Array.isArray(comment.likes)
+              ? comment.likes
+              : [];
+            const cLikesCount = cLikesArr.length;
+            const cIsLiked = viewerUsername
+              ? cLikesArr.includes(viewerUsername)
+              : false;
+
+            const formattedReplies = Array.isArray(comment.replies)
+              ? comment.replies.map((reply) => {
+                  const rLikesArr = Array.isArray(reply.likes)
+                    ? reply.likes
+                    : [];
+                  const rLikesCount = rLikesArr.length;
+                  const rIsLiked = viewerUsername
+                    ? rLikesArr.includes(viewerUsername)
+                    : false;
+
+                  return {
+                    _id: reply._id,
+                    username: reply.username,
+                    avatar: avatarMap[reply.username] || "",
+                    text: reply.text,
+                    createdAt: reply.createdAt,
+                    timeLabel: getTimeLabel(reply.createdAt),
+                    likes: rLikesCount,
+                    isLiked: rIsLiked,
+                  };
+                })
+              : [];
+
+            return {
+              _id: comment._id,
+              username: comment.username,
+              name: comment.name || "",
+              avatar: avatarMap[comment.username] || "",
+              text: comment.text,
+              createdAt: comment.createdAt,
+              timeLabel: getTimeLabel(comment.createdAt),
+              likes: cLikesCount,
+              isLiked: cIsLiked,
+              replies: formattedReplies,
+            };
+          })
+        : [];
+
+      const author = authorMap[post._id.toString()] || {};
+
+      return {
+        _id: post._id,
+        title: post.title,
+        description: post.description,
+        likes: post.likes,
+        language: post.language,
+
+        // ✅ NEW: post owner info
+        username: author.username || "",
+        name: author.name || "",
+        profilepic: author.profilepic || "",
+
+        comment: formattedComments,
+        commentCount: Array.isArray(post.comment) ? post.comment.length : 0,
+        likes_count: Array.isArray(post.likes) ? post.likes.length : 0,
+        timeLabel: getTimeLabel(post.createdAt), // based on post.createdAt
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Feed fetched successfully.",
+      data: formatted,
+    });
+  } catch (error) {
+    console.error("Error fetching feed:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error.",
