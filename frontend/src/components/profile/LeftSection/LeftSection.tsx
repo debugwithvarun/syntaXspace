@@ -3,7 +3,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import ProfileCard from './ProfileCard'
 import TabSection from './TabSection'
 import { useEffect, useState } from 'react'
-import { useAuth } from '@/hooks/useAuth'
+import ImagePath from '@/lib/ImagePath'
 
 export type MiniUser = {
   username: string
@@ -12,6 +12,9 @@ export type MiniUser = {
 }
 
 export type NetworkStats = {
+  username:string
+  profilepic:string
+  name:string
   verified:boolean
   followersCount: number
   followingCount: number
@@ -22,8 +25,8 @@ export type NetworkStats = {
   skills?:string[]
 }
 
-const LeftSection = () => {
-  const { name, profilepic, username } = useAuth()
+const LeftSection = ({target_user}:{target_user:string}) => {
+
 
 
   const [loadingStats, setLoadingStats] = useState(true)
@@ -32,7 +35,9 @@ const LeftSection = () => {
       followingCount: 0,
       postCount:0,
       verified:false,
-  
+      username:target_user,
+      profilepic:"",
+      name:"",
       followers: [],
       following: [],
       bio: "",
@@ -41,16 +46,17 @@ const LeftSection = () => {
 
     useEffect(() => {
       const fetchNetworkInfo = async () => {
-        if (!username) return
+        if (!target_user) return
   
         try {
-          const res = await fetch(`/api/get-network-info/${username}`)
+          const res = await fetch(`/api/get-network-info/${target_user}`)
           const data = await res.json()
-          // console.log("Network info:", data)
           if (data.success && data.data) {
             setNetworkStats({
               verified:data.data.verified || false,
-       
+              profilepic:ImagePath(data.data.profilepic) || "",
+              name:data.data.name || "",
+              username:data.data.username || target_user,
               followersCount: data.data.followersCount || 0,
               followingCount: data.data.followingCount || 0,
               postCount:data.data.postCount || 0,
@@ -68,7 +74,7 @@ const LeftSection = () => {
       }
   
       fetchNetworkInfo()
-    }, [username])
+    }, [target_user])
   
   return (
 
@@ -85,8 +91,8 @@ const LeftSection = () => {
     >
       <div className="pt-10 flex flex-col gap-4 pb-[22vh]">
       
-        <ProfileCard name={name} profilepic={profilepic} networkStats={networkStats} loadingStats={loadingStats} username={username}/>
-        <TabSection postCount={networkStats.postCount} />
+        <ProfileCard  networkStats={networkStats} loadingStats={loadingStats} />
+        <TabSection postCount={networkStats.postCount} username={target_user}/>
       </div>
     </ScrollArea>
 

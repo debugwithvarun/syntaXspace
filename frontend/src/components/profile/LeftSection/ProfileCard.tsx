@@ -125,17 +125,12 @@ const StatItem: React.FC<StatItemProps> = ({
 )
 
 type ProfileCardProps = {
-  name: string
-  username: string
-  profilepic?: string
   networkStats: NetworkStats
   loadingStats: boolean
 }
 
 const ProfileCardComponent: React.FC<ProfileCardProps> = ({
-  name,
-  username,
-  profilepic,
+
   networkStats,
   loadingStats,
 }) => {
@@ -149,9 +144,9 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
           {/* Avatar Section */}
           <div className="shrink-0">
             <Avatar className="h-32 w-32 rounded-2xl border-4 border-primary/10 shadow-lg">
-              <AvatarImage src={profilepic} alt={name || "User avatar"} />
+              <AvatarImage src={networkStats.profilepic} alt={networkStats.name || "User avatar"} />
               <AvatarFallback className="text-4xl font-bold bg-primary/20 text-primary">
-                {getInitials(name)}
+                {getInitials(networkStats.name)}
               </AvatarFallback>
             </Avatar>
           </div>
@@ -162,7 +157,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground truncate">
-                  {name || "User Name"}
+                  {networkStats.name || "User Name"}
                 </h1>
                 {networkStats.verified && (
                   <Badge className="bg-blue-500/15 text-blue-600 dark:text-blue-300 border-0 text-xs font-bold uppercase">
@@ -170,7 +165,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
                   </Badge>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground font-medium">@{username}</p>
+              <p className="text-sm text-muted-foreground font-medium">@{networkStats.username}</p>
             </div>
 
             {/* Bio */}
@@ -182,20 +177,23 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
 
             {/* Stats Row */}
             <div className="flex gap-2 pt-2">
-              <StatItem
-                label="Posts"
-                value={formatCount(networkStats.postCount || 0)}
-                loading={loadingStats}
-                username={username}
-                users={[]}
-                title="Posts"
-                description={`${name} has shared @username`}
-              />
+            <Button
+        variant="ghost"
+        className="flex flex-col items-center gap-1 py-2 px-4 hover:bg-secondary/50 transition-colors rounded-lg h-auto"
+      >
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Post
+              </span>
+              <span className="text-xl sm:text-2xl font-bold text-foreground">
+                {networkStats.postCount || 0}
+              </span>
+           
+              </Button>
               <StatItem
                 label="Followers"
                 value={formatCount(networkStats.followersCount)}
                 loading={loadingStats}
-                username={username}
+                username={networkStats.username}
                 users={networkStats.followers}
                 title="Followers"
                 description="People following @username"
@@ -204,7 +202,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
                 label="Following"
                 value={formatCount(networkStats.followingCount)}
                 loading={loadingStats}
-                username={username}
+                username={networkStats.username}
                 users={networkStats.following}
                 title="Following"
                 description="People @username is following"

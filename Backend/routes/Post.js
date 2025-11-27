@@ -142,10 +142,9 @@ PostRouter.route("/edit-post").post(async (req, res) => {
 });
 
 // ======================= GET POSTS (WITH COMMENTS) ==========================
-PostRouter.route("/get-post").get(async (req, res) => {
+PostRouter.route("/get-post/:username").get(async (req, res) => {
   try {
-    const viewerUsername =
-      req?.data?.username || req?.user?.username || req.query.username;
+    const viewerUsername = req.params.username;
 
     if (!viewerUsername) {
       return res.status(400).json({
@@ -901,4 +900,6 @@ PostRouter.route("/get-comments/:postId").get(async (req, res) => {
     });
   }
 });
+
+
 export default PostRouter;

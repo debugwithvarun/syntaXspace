@@ -1,6 +1,6 @@
-import React, {  useEffect, useMemo, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import { Card } from "@/components/ui/card"
-import { EllipsisVertical, Heart,  MessageCircle } from "lucide-react"
+import { EllipsisVertical, Heart, MessageCircle } from "lucide-react"
 
 import { useIdle } from "@/hooks/useIdle"
 import { useAuth } from "@/hooks/useAuth"
@@ -18,19 +18,20 @@ const PostCard: React.FC<PostSummary> = ({
   description,
   likes_count,
   likes,
-
+  username,
   commentCount,
   timeLabel = "Just now",
 }) => {
-  const { setOpenView, setId,setOpenEdit } = useIdle()
-  const { username, name } = useAuth()
+  const { setOpenView, setId, setOpenEdit } = useIdle()
+  const { name, username: Authuser } = useAuth()
 
   const [liked, setLiked] = useState(likes)
   const [likeCount, setLikeCount] = useState(likes_count)
-  const [isLiked, setIsLiked] = useState(liked.includes(username))
+  const [isLiked, setIsLiked] = useState(liked.includes(Authuser))
   const [showComment, setShowComment] = useState(false)
   const [comment, setComment] = useState([])
-  const [isCmnt,setIsCmnt]=useState(false);
+  const [isCmnt, setIsCmnt] = useState(false);
+
   useEffect(() => {
     const fetchComments = async () => {
       try {
@@ -41,26 +42,26 @@ const PostCard: React.FC<PostSummary> = ({
             credentials: "include",
           }
         );
-  
+
         const { data } = await res.json();
         setComment(data);
       } catch (error) {
         console.error("Error fetching comments:", error);
       }
     };
-  
+
     fetchComments();
-  }, [_id,isCmnt,username]); // important dependencies
-  
+  }, [_id, isCmnt, username]); // important dependencies
+
 
   const handleOpenView = () => {
     setId(_id)
     setOpenView(true)
   }
 
-  const handleOpenEdit=()=>{
+  const handleOpenEdit = () => {
     setId(_id)
-    setOpenEdit((prev)=>!prev)
+    setOpenEdit((prev) => !prev)
   }
 
   const likeLabel = useMemo(() => {
@@ -76,19 +77,19 @@ const PostCard: React.FC<PostSummary> = ({
       className="cursor-pointer rounded-xl border border-border/60 p-6 relative"
       onClick={handleOpenView}
     >
-     <span className="absolute right-4 top-4" onClick={(e)=>e.stopPropagation()}> <MenuBarEditDelete
-  projectName={username}
-  handleOpenEdit={handleOpenEdit}
-  onConfirmDelete={async () => {
-    await fetch(`/api/syntaxspace/delete-post/${_id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-    setIsDlt(prev => !prev);
-  }}
->
-  <EllipsisVertical />
-</MenuBarEditDelete ></span>
+      {username === Authuser && <span className="absolute right-4 top-4" onClick={(e) => e.stopPropagation()}> <MenuBarEditDelete
+        projectName={username}
+        handleOpenEdit={handleOpenEdit}
+        onConfirmDelete={async () => {
+          await fetch(`/api/syntaxspace/delete-post/${_id}`, {
+            method: "DELETE",
+            credentials: "include",
+          });
+          setIsDlt(prev => !prev);
+        }}
+      >
+        <EllipsisVertical />
+      </MenuBarEditDelete ></span>}
       {/* Title & description */}
       <div className="space-y-1">
         <h3 className="text-base font-semibold tracking-tight text-primary sm:text-lg line-clamp-2">
@@ -139,15 +140,15 @@ const PostCard: React.FC<PostSummary> = ({
         <p className="text-xs text-muted-foreground">{timeLabel}</p>
       </div>
 
-   
+
       {showComment && (
         <div
           className="rounded-xl px-3 animate-in slide-in-from-top-2"
           onClick={(e) => e.stopPropagation()}
         >
           <CommentSection
-          setIsCmnt={setIsCmnt}
-          isCmnt={isCmnt}
+            setIsCmnt={setIsCmnt}
+            isCmnt={isCmnt}
             username={username}
             name={name}
             postId={_id}

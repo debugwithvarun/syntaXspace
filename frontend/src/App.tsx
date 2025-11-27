@@ -16,6 +16,7 @@ import IdleDashboard from "./Pages/IdleDashboard"
 
 import { useIdle } from "./hooks/useIdle"
 import ProfileDashboard from "./Pages/ProfileDashboard"
+import CommunityDashbaord from "./Pages/CommunityDashboard"
 
 
 const App = () => {
@@ -52,6 +53,7 @@ const App = () => {
         <Route path="/setting" element={<Setting/>}/>
         <Route path="/network" element={<NetworkDashbaord/>}/>
         <Route path="/profile/:target_user" element={<ProfileDashboard/>}/>
+        <Route path="/community/:target_user" element={<CommunityDashbaord/>}/>
         <Route path="/logout" element={<Logout/>}/>
       </Route>
     </Routes>

@@ -284,7 +284,7 @@ Networkrouter
       // Get follower & following arrays only
       const user = await User.findOne(
         { username: target_user },
-        { _id: 0, follower: 1, following: 1,bio:1,skills:1,post:1 }
+        { _id: 0, follower: 1, following: 1,bio:1,skills:1,post:1,name:1 ,username:1, verified:1,profilepic:1 }
       )
 
       if (!user) {
@@ -301,6 +301,10 @@ Networkrouter
       return res.status(200).json({
         success: true,
         data: {
+          name:user.name,
+          username:user.username,
+          verified:user.verified,
+          profilepic:user.profilepic,
           followersCount,
           followingCount,
           postCount,
