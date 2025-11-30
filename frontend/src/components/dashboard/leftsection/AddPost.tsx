@@ -18,7 +18,7 @@ export function AddPost() {
   const isEmpty = postCount === 0
 
   return (
-    <Empty className={`p-6 md:p-8 ${!isEmpty && "border-t bg-muted/30"}`}>
+    <Empty className={`p-6 md:p-8 ${!isEmpty && " bg-background"}`}>
       <EmptyHeader>
         <EmptyMedia variant="icon">
           <IconCode />

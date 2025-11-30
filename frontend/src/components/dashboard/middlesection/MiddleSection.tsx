@@ -8,6 +8,7 @@ export type PostSummary = {
   title: string
   description: string
   commentCount: number
+  isError:boolean
   likes: string[]
   username: string
   profilepic:string
@@ -15,7 +16,7 @@ export type PostSummary = {
   likes_count: number
   timeLabel: string
   language: string
-
+  
 }
 
 export type Feed = {
@@ -24,6 +25,7 @@ export type Feed = {
   description: string
   commentCount: number
   likes: string[]
+  isError:boolean
   username: string
   profilepic:string
   name:string
@@ -48,6 +50,7 @@ const MiddleSection = () => {
           return
         }
         const data=await res.json()
+        // console.log(data)
         setFeed(data.data)
       }
       fetchData()
@@ -58,7 +61,7 @@ const MiddleSection = () => {
     }
   },[])
 
-  console.log("feed :",feed)
+  // console.log("feed :",feed)
   return (
     <ScrollArea
       className="
@@ -79,6 +82,7 @@ const MiddleSection = () => {
           <PostCard
             key={post._id}
             _id={post._id}
+            isError={post.isError}
             title={post.title}
             description={post.description}
             commentCount={post.commentCount}

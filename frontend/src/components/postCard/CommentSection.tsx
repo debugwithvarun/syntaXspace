@@ -98,7 +98,7 @@ const ReplyItem: React.FC<ReplyItemProps> = React.memo(
     return (
       <div className="group rounded-lg bg-background/60 p-2.5 transition-colors hover:bg-muted/40">
         <div className="flex gap-2.5">
-          <Avatar className="h-8 w-8 flex-shrink-0 ring-2 ring-background">
+          <Avatar className="h-8 w-8 shrink-0 ring-2 ring-background">
             <AvatarImage
               src={
                 reply.avatar === profilepic
@@ -107,7 +107,7 @@ const ReplyItem: React.FC<ReplyItemProps> = React.memo(
               }
               alt={reply.username}
             />
-            <AvatarFallback className="bg-gradient-to-br from-primary/15 to-primary/5 text-primary text-[10px] font-semibold">
+            <AvatarFallback className="bg-linear-to-br from-primary/15 to-primary/5 text-primary text-[10px] font-semibold">
               {getInitials(reply.username)}
             </AvatarFallback>
           </Avatar>
@@ -122,7 +122,7 @@ const ReplyItem: React.FC<ReplyItemProps> = React.memo(
               </span>
             </div>
 
-            <p className="break-words text-sm leading-relaxed text-foreground/90">
+            <p className="wrap-break-words text-sm leading-relaxed text-foreground/90">
               {reply.text}
             </p>
 
@@ -270,7 +270,7 @@ const CommentItem: React.FC<CommentItemProps> = React.memo(
         {/* Main Comment */}
         <div className="group rounded-lg border border-transparent bg-background/60 p-3 transition-colors hover:border-border/60 hover:bg-muted/40">
           <div className="flex gap-3">
-            <Avatar className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0 ring-2 ring-background">
+            <Avatar className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 ring-2 ring-background">
               <AvatarImage
                 src={
                   comment.avatar === profilepic
@@ -279,7 +279,7 @@ const CommentItem: React.FC<CommentItemProps> = React.memo(
                 }
                 alt={comment.username}
               />
-              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs sm:text-sm font-semibold">
+              <AvatarFallback className="bg-linear-to-br from-primary/20 to-primary/10 text-primary text-xs sm:text-sm font-semibold">
                 {comment.username === authUsername
                   ? "You"
                   : getInitials(comment.username)}
@@ -298,7 +298,7 @@ const CommentItem: React.FC<CommentItemProps> = React.memo(
               </div>
 
               {/* Comment content */}
-              <p className="break-words text-sm leading-relaxed text-foreground/90">
+              <p className="wrap-break-words text-sm leading-relaxed text-foreground/90">
                 {comment.text}
               </p>
 
@@ -374,10 +374,11 @@ const CommentItem: React.FC<CommentItemProps> = React.memo(
                         <AlertDialogAction
                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           onClick={() =>
-                            handleDeleteComment({
+                            setIsCmnt && handleDeleteComment({
                               postId,
                               commentId: comment._id,
                               setLocalComments,
+                              setIsCmnt
                             })
                           }
                         >
@@ -392,9 +393,9 @@ const CommentItem: React.FC<CommentItemProps> = React.memo(
               {/* Reply Input */}
               {replyingTo === comment._id && (
                 <div className="mt-2 flex gap-2 animate-in slide-in-from-top-2">
-                  <Avatar className="h-7 w-7 flex-shrink-0">
+                  <Avatar className="h-7 w-7 shrink-0">
                     <AvatarImage src={profilepic} alt="You" />
-                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-[10px] font-semibold">
+                    <AvatarFallback className="bg-linear-to-br from-primary/20 to-primary/10 text-primary text-[10px] font-semibold">
                       {getInitials(authUsername || "U")}
                     </AvatarFallback>
                   </Avatar>

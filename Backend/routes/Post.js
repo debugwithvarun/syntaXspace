@@ -91,7 +91,7 @@ PostRouter.route("/run-code").post(async (req, res) => {
       stdout: finalStdout,
       stderr: finalStderr,
     };
-
+    // console.log("Run Code Response:", normalized);
     return res.status(200).json(normalized);
   } catch (error) {
     console.error(error);
@@ -255,7 +255,7 @@ PostRouter.route("/get-post/:username").get(async (req, res) => {
     const posts = await Post.find({
       _id: { $in: user.post },
     })
-      .select("title description comment likes createdAt")
+      .select("title description comment likes createdAt isError")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -282,48 +282,48 @@ PostRouter.route("/get-post/:username").get(async (req, res) => {
     const formattedPosts = posts.map((post) => {
       const formattedComments = Array.isArray(post.comment)
         ? post.comment.map((comment) => {
-            const cLikesArr = Array.isArray(comment.likes)
-              ? comment.likes
-              : [];
-            const cLikesCount = cLikesArr.length;
-            const cIsLiked = viewerUsername
-              ? cLikesArr.includes(viewerUsername)
-              : false;
+          const cLikesArr = Array.isArray(comment.likes)
+            ? comment.likes
+            : [];
+          const cLikesCount = cLikesArr.length;
+          const cIsLiked = viewerUsername
+            ? cLikesArr.includes(viewerUsername)
+            : false;
 
-            const formattedReplies = Array.isArray(comment.replies)
-              ? comment.replies.map((reply) => {
-                  const rLikesArr = Array.isArray(reply.likes)
-                    ? reply.likes
-                    : [];
-                  const rLikesCount = rLikesArr.length;
-                  const rIsLiked = viewerUsername
-                    ? rLikesArr.includes(viewerUsername)
-                    : false;
+          const formattedReplies = Array.isArray(comment.replies)
+            ? comment.replies.map((reply) => {
+              const rLikesArr = Array.isArray(reply.likes)
+                ? reply.likes
+                : [];
+              const rLikesCount = rLikesArr.length;
+              const rIsLiked = viewerUsername
+                ? rLikesArr.includes(viewerUsername)
+                : false;
 
-                  return {
-                    _id: reply._id,
-                    username: reply.username,
-                    avatar: avatarMap[reply.username] || "",
-                    text: reply.text,
-                    createdAt: reply.createdAt,
-                    likes: rLikesCount,
-                    isLiked: rIsLiked,
-                  };
-                })
-              : [];
+              return {
+                _id: reply._id,
+                username: reply.username,
+                avatar: avatarMap[reply.username] || "",
+                text: reply.text,
+                createdAt: reply.createdAt,
+                likes: rLikesCount,
+                isLiked: rIsLiked,
+              };
+            })
+            : [];
 
-            return {
-              _id: comment._id,
-              username: comment.username,
-              name: comment.name || "",
-              avatar: avatarMap[comment.username] || "",
-              text: comment.text,
-              createdAt: comment.createdAt,
-              likes: cLikesCount,
-              isLiked: cIsLiked,
-              replies: formattedReplies,
-            };
-          })
+          return {
+            _id: comment._id,
+            username: comment.username,
+            name: comment.name || "",
+            avatar: avatarMap[comment.username] || "",
+            text: comment.text,
+            createdAt: comment.createdAt,
+            likes: cLikesCount,
+            isLiked: cIsLiked,
+            replies: formattedReplies,
+          };
+        })
         : [];
 
       return {
@@ -332,6 +332,7 @@ PostRouter.route("/get-post/:username").get(async (req, res) => {
         description: post.description,
         likes: post.likes,
         comment: formattedComments,
+        isError: post.isError || false,
         commentCount: Array.isArray(post.comment) ? post.comment.length : 0,
         likes_count: Array.isArray(post.likes) ? post.likes.length : 0,
         timeLabel: getTimeLabel(post.createdAt),
@@ -1008,7 +1009,7 @@ PostRouter.route("/feed").get(async (req, res) => {
 
     // Fetch posts by those ids, sorted by actual createdAt
     const posts = await Post.find({ _id: { $in: userDoc.feeds } })
-      .select("title description likes comment createdAt language")
+      .select("title description likes comment createdAt language isError")
       .sort({ createdAt: -1 }) // real post.createdAt, not feeds order
       .lean();
 
@@ -1059,50 +1060,50 @@ PostRouter.route("/feed").get(async (req, res) => {
     const formatted = posts.map((post) => {
       const formattedComments = Array.isArray(post.comment)
         ? post.comment.map((comment) => {
-            const cLikesArr = Array.isArray(comment.likes)
-              ? comment.likes
-              : [];
-            const cLikesCount = cLikesArr.length;
-            const cIsLiked = viewerUsername
-              ? cLikesArr.includes(viewerUsername)
-              : false;
+          const cLikesArr = Array.isArray(comment.likes)
+            ? comment.likes
+            : [];
+          const cLikesCount = cLikesArr.length;
+          const cIsLiked = viewerUsername
+            ? cLikesArr.includes(viewerUsername)
+            : false;
 
-            const formattedReplies = Array.isArray(comment.replies)
-              ? comment.replies.map((reply) => {
-                  const rLikesArr = Array.isArray(reply.likes)
-                    ? reply.likes
-                    : [];
-                  const rLikesCount = rLikesArr.length;
-                  const rIsLiked = viewerUsername
-                    ? rLikesArr.includes(viewerUsername)
-                    : false;
+          const formattedReplies = Array.isArray(comment.replies)
+            ? comment.replies.map((reply) => {
+              const rLikesArr = Array.isArray(reply.likes)
+                ? reply.likes
+                : [];
+              const rLikesCount = rLikesArr.length;
+              const rIsLiked = viewerUsername
+                ? rLikesArr.includes(viewerUsername)
+                : false;
 
-                  return {
-                    _id: reply._id,
-                    username: reply.username,
-                    avatar: avatarMap[reply.username] || "",
-                    text: reply.text,
-                    createdAt: reply.createdAt,
-                    timeLabel: getTimeLabel(reply.createdAt),
-                    likes: rLikesCount,
-                    isLiked: rIsLiked,
-                  };
-                })
-              : [];
+              return {
+                _id: reply._id,
+                username: reply.username,
+                avatar: avatarMap[reply.username] || "",
+                text: reply.text,
+                createdAt: reply.createdAt,
+                timeLabel: getTimeLabel(reply.createdAt),
+                likes: rLikesCount,
+                isLiked: rIsLiked,
+              };
+            })
+            : [];
 
-            return {
-              _id: comment._id,
-              username: comment.username,
-              name: comment.name || "",
-              avatar: avatarMap[comment.username] || "",
-              text: comment.text,
-              createdAt: comment.createdAt,
-              timeLabel: getTimeLabel(comment.createdAt),
-              likes: cLikesCount,
-              isLiked: cIsLiked,
-              replies: formattedReplies,
-            };
-          })
+          return {
+            _id: comment._id,
+            username: comment.username,
+            name: comment.name || "",
+            avatar: avatarMap[comment.username] || "",
+            text: comment.text,
+            createdAt: comment.createdAt,
+            timeLabel: getTimeLabel(comment.createdAt),
+            likes: cLikesCount,
+            isLiked: cIsLiked,
+            replies: formattedReplies,
+          };
+        })
         : [];
 
       const author = authorMap[post._id.toString()] || {};
@@ -1118,7 +1119,7 @@ PostRouter.route("/feed").get(async (req, res) => {
         username: author.username || "",
         name: author.name || "",
         profilepic: author.profilepic || "",
-
+        isError: post.isError || false,
         comment: formattedComments,
         commentCount: Array.isArray(post.comment) ? post.comment.length : 0,
         likes_count: Array.isArray(post.likes) ? post.likes.length : 0,

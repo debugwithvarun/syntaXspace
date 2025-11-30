@@ -79,7 +79,7 @@ const CodeRunner = () => {
   }
 
   // Judge0: id === 3 => Accepted
-  const isError = status && status.id !== 3
+  const isError = (status && status.id !== 3) || stderr.trim()!==""
 
   return (
     <>

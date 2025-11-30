@@ -19,8 +19,8 @@ const PostCard: React.FC<PostSummary> = ({
   likes_count,
   likes,
   username,
-  commentCount,
   timeLabel = "Just now",
+  isError,
 }) => {
   const { setOpenView, setId, setOpenEdit } = useIdle()
   const { name, username: Authuser } = useAuth()
@@ -29,8 +29,13 @@ const PostCard: React.FC<PostSummary> = ({
   const [likeCount, setLikeCount] = useState(likes_count)
   const [isLiked, setIsLiked] = useState(liked.includes(Authuser))
   const [showComment, setShowComment] = useState(false)
-  const [comment, setComment] = useState([])
-  const [isCmnt, setIsCmnt] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [comment, setComment] = useState<any[]>([])
+  const [isCmnt, setIsCmnt] = useState(false)
+
+  // Local animation states
+  const [likePulse, setLikePulse] = useState(false)
+  const [showPlus, setShowPlus] = useState(false)
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -41,18 +46,29 @@ const PostCard: React.FC<PostSummary> = ({
             method: "GET",
             credentials: "include",
           }
-        );
-
-        const { data } = await res.json();
-        setComment(data);
+        )
+        const { data } = await res.json()
+        setComment(data)
       } catch (error) {
-        console.error("Error fetching comments:", error);
+        console.error("Error fetching comments:", error)
       }
-    };
+    }
+    fetchComments()
+  }, [_id, isCmnt, username])
 
-    fetchComments();
-  }, [_id, isCmnt, username]); // important dependencies
+  useEffect(() => {
+    if (likePulse) {
+      const t = setTimeout(() => setLikePulse(false), 300)
+      return () => clearTimeout(t)
+    }
+  }, [likePulse])
 
+  useEffect(() => {
+    if (showPlus) {
+      const t = setTimeout(() => setShowPlus(false), 700)
+      return () => clearTimeout(t)
+    }
+  }, [showPlus])
 
   const handleOpenView = () => {
     setId(_id)
@@ -61,7 +77,7 @@ const PostCard: React.FC<PostSummary> = ({
 
   const handleOpenEdit = () => {
     setId(_id)
-    setOpenEdit((prev) => !prev)
+    setOpenEdit(prev => !prev)
   }
 
   const likeLabel = useMemo(() => {
@@ -74,89 +90,133 @@ const PostCard: React.FC<PostSummary> = ({
 
   return (
     <Card
-      className="cursor-pointer rounded-xl border border-border/60 p-6 relative"
+      className="cursor-pointer rounded-xl border border-border/60 p-0 relative overflow-hidden"
       onClick={handleOpenView}
     >
-      {username === Authuser && <span className="absolute right-4 top-4" onClick={(e) => e.stopPropagation()}> <MenuBarEditDelete
-        projectName={username}
-        handleOpenEdit={handleOpenEdit}
-        onConfirmDelete={async () => {
-          await fetch(`/api/syntaxspace/delete-post/${_id}`, {
-            method: "DELETE",
-            credentials: "include",
-          });
-          setIsDlt(prev => !prev);
-        }}
-      >
-        <EllipsisVertical />
-      </MenuBarEditDelete ></span>}
-      {/* Title & description */}
-      <div className="space-y-1">
-        <h3 className="text-base font-semibold tracking-tight text-primary sm:text-lg line-clamp-2">
-          {title}
-        </h3>
-
-        <p className="line-clamp-4 text-sm leading-relaxed text-muted-foreground">
-          {description}
-        </p>
-      </div>
-
-      {/* Footer: likes / comments / time */}
+      {/* LEFT STRIP */}
       <div
-        className="mt-1 flex items-center justify-between border-t border-border/60 pt-2 "
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center gap-2 sm:gap-3">
+        className={`w-1 absolute left-0 top-0 bottom-0 ${isError ? "bg-red-500" : "bg-primary"}`}
+      />
 
-          <span
-            onClick={(e) =>
-              handleLikeClick({ e, _id, setIsLiked, setLikeCount, setLiked })
-            }
-            className={`
-              inline-flex items-center gap-1.5 rounded-full px-1 py-1 text-xs 
-              transition-colors cursor-pointer
-             
-            `}
-          >
-            <Heart
-              className={`h-4 w-4 transition-transform group-hover:scale-110 ${isLiked ? "fill-primary text-primary" : "fill-none stroke-muted-foreground text-muted-foreground"
-                }`}
-            />
-            <span className="font-medium">{likeLabel}</span>
+      {/* MAIN CONTENT */}
+      <div className="p-6">
+        {/* EDIT/DELETE MENU */}
+        {username === Authuser && (
+          <span className="absolute right-4 top-4" onClick={(e) => e.stopPropagation()}>
+            <MenuBarEditDelete
+              projectName={username}
+              handleOpenEdit={handleOpenEdit}
+              onConfirmDelete={async () => {
+                await fetch(`/api/syntaxspace/delete-post/${_id}`, {
+                  method: "DELETE",
+                  credentials: "include",
+                })
+                setIsDlt(prev => !prev)
+              }}
+            >
+              <EllipsisVertical />
+            </MenuBarEditDelete>
           </span>
+        )}
 
-          {/* Comment toggle */}
-          <span
-            onClick={(e) => handleCommentClick({ e, setShowComment })}
-            className="inline-flex items-center gap-1.5 rounded-full px-1 py-1 text-xs  text-muted-foreground transition-colors hover:bg-muted/70"
-          >
-            <MessageCircle className="h-4 w-4" />
-            <span>
-              {commentCount} Comment
-            </span>
-          </span>
+
+        <div className="space-y-4">
+          <h3 className="text-base font-semibold tracking-tight text-primary sm:text-lg line-clamp-2">
+            {title}
+          </h3>
+
+          <p className="line-clamp-4 text-sm leading-relaxed text-muted-foreground w-[95%]">
+            {description}
+          </p>
         </div>
 
-        <p className="text-xs text-muted-foreground">{timeLabel}</p>
-      </div>
-
-
-      {showComment && (
         <div
-          className="rounded-xl px-3 animate-in slide-in-from-top-2"
+          className="mt-3 flex items-center justify-between pt-2"
           onClick={(e) => e.stopPropagation()}
         >
-          <CommentSection
-            setIsCmnt={setIsCmnt}
-            isCmnt={isCmnt}
-            username={username}
-            name={name}
-            postId={_id}
-            comments={comment} // expects Comment[] from PostSummary
-            onClose={() => setShowComment(false)}
-          />
+          <div className="flex items-center gap-2 sm:gap-3">
+
+            <span
+              className="relative inline-flex items-center gap-1.5 rounded-full px-1 py-1 text-xs transition-colors cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation()
+                const willLike = !isLiked
+         
+                handleLikeClick({ e, _id, setIsLiked, setLikeCount, setLiked })
+
+        
+                setLikePulse(true)
+                if (willLike) {
+                  setShowPlus(true)
+                }
+              }}
+            >
+              <Heart
+                className={`h-4 w-4 transition-transform ${isLiked ? "fill-primary text-primary" : "fill-none stroke-muted-foreground text-muted-foreground"}`}
+                style={{ transform: likePulse ? "scale(1.22)" : undefined }}
+              />
+
+       
+              <span
+                className={`font-medium transition-transform ${likePulse ? "scale-110" : "scale-100"} ${isLiked ? "text-primary" : "text-muted-foreground"}`}
+              >
+                {likeLabel}
+              </span>
+
+     
+              {showPlus && (
+                <span
+                  className="absolute -right-3 -top-5 text-xs font-semibold text-primary"
+                  style={{
+                    transform: "translateY(0)",
+                    animation: "likeFloat 700ms ease-out forwards",
+                    
+                  }}
+                >
+                  +1
+                </span>
+              )}
+            </span>
+
+          
+            <span
+              onClick={(e) => handleCommentClick({ e, setShowComment })}
+              className="inline-flex items-center gap-1.5 rounded-full px-1 py-1 text-xs text-muted-foreground "
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span>{comment.length} Comment{comment.length >= 1 ? "s" : ""}</span>
+            </span>
+          </div>
+
+          <p className="text-xs text-muted-foreground">{timeLabel}</p>
         </div>
-      )}
+
+    
+        {showComment && (
+          <div
+            className="rounded-xl px-3 animate-in slide-in-from-top-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CommentSection
+              setIsCmnt={setIsCmnt}
+              isCmnt={isCmnt}
+              username={username}
+              name={name}
+              postId={_id}
+              comments={comment}
+              onClose={() => setShowComment(false)}
+            />
+          </div>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes likeFloat {
+          0% { transform: translateY(0) scale(1); opacity: 1; }
+          60% { transform: translateY(-18px) scale(1.05); opacity: 0.9; }
+          100% { transform: translateY(-32px) scale(0.95); opacity: 0; }
+        }
+      `}</style>
     </Card>
   )
 }
