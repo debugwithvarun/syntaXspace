@@ -8,6 +8,7 @@ export type PostSummary = {
   title: string
   description: string
   commentCount: number
+  isError:boolean
   likes:string[]
   setIsDlt:React.Dispatch<React.SetStateAction<boolean>>;
   username:string,
@@ -110,6 +111,7 @@ useEffect(() => {
         <PostCard
         setIsDlt={setIsDlt}
           key={post._id}
+          isError={post.isError}
           _id={post._id}
           title={post.title}
           description={post.description}

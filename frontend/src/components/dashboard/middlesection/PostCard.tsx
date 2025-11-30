@@ -1,174 +1,287 @@
-import React, { useEffect, useMemo, useState } from "react"
-import { Card } from "@/components/ui/card"
-import {  Heart, MessageCircle } from "lucide-react"
-
-import { useIdle } from "@/hooks/useIdle"
-import { useAuth } from "@/hooks/useAuth"
-
-import { handleLikeClick } from "@/lib/LikeFunction"
-import { handleCommentClick } from "@/lib/CommentFunction"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import CommentSection from "@/components/postCard/CommentSection"
-import type { PostSummary } from "./MiddleSection"
-import ImagePath from "@/lib/ImagePath"
-import { Link } from "react-router-dom"
-
-
+import React, { useEffect, useMemo, useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Heart, MessageCircle } from "lucide-react";
+import { useIdle } from "@/hooks/useIdle";
+import { useAuth } from "@/hooks/useAuth";
+import { handleLikeClick } from "@/lib/LikeFunction";
+import { handleCommentClick } from "@/lib/CommentFunction";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import CommentSection from "@/components/postCard/CommentSection";
+import type { PostSummary } from "./MiddleSection";
+import ImagePath from "@/lib/ImagePath";
+import { Link } from "react-router-dom";
 
 const PostCard: React.FC<PostSummary> = ({
   _id,
   title,
   description,
   likes_count,
+  isError,
   likes,
-  owner, 
-   profilepic,
+  owner,
+  profilepic,
   username,
-  commentCount,
   timeLabel = "Just now",
   language
 }) => {
-  const { setOpenView, setId, } = useIdle()
-  const { name, username: Authuser } = useAuth()
+  const { setOpenView, setId } = useIdle();
+  const { name, username: Authuser } = useAuth();
 
-  const [liked, setLiked] = useState(likes)
-  const [likeCount, setLikeCount] = useState(likes_count)
-  const [isLiked, setIsLiked] = useState(liked.includes(Authuser))
-  const [showComment, setShowComment] = useState(false)
-  const [comment, setComment] = useState([])
+  const [liked, setLiked] = useState<string[]>(likes);
+  const [likeCount, setLikeCount] = useState<number>(likes_count ?? 0);
+  const [isLiked, setIsLiked] = useState<boolean>(liked.includes(Authuser));
+  const [showComment, setShowComment] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [comment, setComment] = useState<any[]>([]);
   const [isCmnt, setIsCmnt] = useState(false);
+
+  // --- Like animation states ---
+  const [likePulse, setLikePulse] = useState(false);
+  const [showPlus, setShowPlus] = useState(false);
 
   useEffect(() => {
     const fetchComments = async () => {
       try {
         const res = await fetch(
           `/api/syntaxspace/get-comments/${_id}?username=${username}`,
-          {
-            method: "GET",
-            credentials: "include",
-          }
         );
-
         const { data } = await res.json();
         setComment(data);
       } catch (error) {
         console.error("Error fetching comments:", error);
       }
     };
-
     fetchComments();
-  }, [_id, isCmnt, username]); // important dependencies
+  }, [_id, isCmnt, username]);
 
+  // cleanup for like pulse
+  useEffect(() => {
+    if (likePulse) {
+      const t = setTimeout(() => setLikePulse(false), 350);
+      return () => clearTimeout(t);
+    }
+  }, [likePulse]);
+
+  // cleanup for +1 badge
+  useEffect(() => {
+    if (showPlus) {
+      const t = setTimeout(() => setShowPlus(false), 700);
+      return () => clearTimeout(t);
+    }
+  }, [showPlus]);
 
   const handleOpenView = () => {
-    setId(_id)
-    setOpenView(true)
-  }
-
-
+    setId(_id);
+    setOpenView(true);
+  };
 
   const likeLabel = useMemo(() => {
-    if (likeCount === 0) return "Like"
-    if (!isLiked) return `${likeCount} like${likeCount > 1 ? "s" : ""}`
-    if (likeCount === 1) return "You"
-    const others = likeCount - 1
-    return `You & ${others} other${others > 1 ? "s" : ""}`
-  }, [isLiked, likeCount])
+    if (likeCount === 0) return "Like";
+    if (!isLiked) return `${likeCount} like${likeCount > 1 ? "s" : ""}`;
+    if (likeCount === 1) return "You";
+    const others = likeCount - 1;
+    return `You & ${others} other${others > 1 ? "s" : ""}`;
+  }, [isLiked, likeCount]);
 
   return (
     <Card
-      className="cursor-pointer rounded-xl border border-border/60 p-6 relative"
       onClick={handleOpenView}
+      className={`relative bg-bac group cursor-pointer rounded-xl p-0 border-0 transition-transform
+        ${isError ? "" : ""}
+      `}
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Avatar className="w-10 h-10">
-            <AvatarImage src={ImagePath(profilepic)} alt="Kelly King" />
-            <AvatarFallback>{owner.split(" ").map(n => n[0]).join("")}</AvatarFallback>
-          </Avatar>
-
-          <div className="leading-tight">
-            <Link to={`/community/${username}`} onClick={(e)=>e.stopPropagation()}>
-            <h5 className="text-sm font-semibold">{owner}</h5>
-            <p className="text-xs text-muted-foreground">@{username}</p>
-            </Link>
-          </div>
-        </div>
-
-        {/* Optional: language / tag pill */}
-        <span className="hidden sm:inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground bg-muted/60">
-          #{language}
-        </span>
-      </div>
-      {/* Title & description */}
-      <div className="space-y-1">
-        <h3 className="text-base font-semibold tracking-tight text-primary sm:text-lg line-clamp-2">
-          {title}
-        </h3>
-
-        <p className="line-clamp-4 text-sm leading-relaxed text-muted-foreground">
-          {description}
-        </p>
-      </div>
-
-      {/* Footer: likes / comments / time */}
-      <div
-        className="mt-1 flex items-center justify-between border-t border-border/60 pt-2 "
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center gap-2 sm:gap-3">
-
-          <span
-            onClick={(e) =>
-              handleLikeClick({ e, _id, setIsLiked, setLikeCount, setLiked })
-            }
-            className={`
-              inline-flex items-center gap-1.5 rounded-full px-1 py-1 text-xs 
-              transition-colors cursor-pointer
-             
-            `}
-          >
-            <Heart
-              className={`h-4 w-4 transition-transform group-hover:scale-110 ${isLiked ? "fill-primary text-primary" : "fill-none stroke-muted-foreground text-muted-foreground"
-                }`}
-            />
-            <span className="font-medium">{likeLabel}</span>
-          </span>
-
-          {/* Comment toggle */}
-          <span
-            onClick={(e) => handleCommentClick({ e, setShowComment })}
-            className="inline-flex items-center gap-1.5 rounded-full px-1 py-1 text-xs  text-muted-foreground transition-colors hover:bg-muted/70"
-          >
-            <MessageCircle className="h-4 w-4" />
-            <span>
-              {commentCount} Comment
-            </span>
-          </span>
-        </div>
-
-        <p className="text-xs text-muted-foreground">{timeLabel}</p>
-      </div>
-
-
-      {showComment && (
+      {/* Left accent + main inner card */}
+      <div className="flex items-stretch">
+        {/* Accent stripe */}
         <div
-          className="rounded-xl px-3 animate-in slide-in-from-top-2"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <CommentSection
-            setIsCmnt={setIsCmnt}
-            isCmnt={isCmnt}
-            username={username}
-            name={name}
-            postId={_id}
-            comments={comment} 
-            onClose={() => setShowComment(false)}
-          />
-        </div>
-      )}
-    </Card>
-  )
-}
+          className={`w-1 rounded-l-xl
+            ${isError ? "bg-red-500" : "bg-linear-to-b from-primary/80 to-primary/40"}
+          `}
+          aria-hidden
+        />
 
-export default PostCard
+        {/* Inner content area */}
+        <div
+          className={`
+            w-full bg-background rounded-r-xl p-5 sm:p-6
+            border border-border/60
+            transition-all duration-200
+            relative
+          `}
+        >
+          {/* Ribbon badges (top-right) */}
+          <div
+            className="absolute right-3 top-3 flex items-center gap-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {isError ? (
+              <div className="inline-flex items-center gap-2 rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white shadow">
+                <svg width="12" height="12" viewBox="0 0 24 24" className="inline-block">
+                  <path fill="currentColor" d="M11.001 2h2v12h-2zM11 18h2v2h-2z" />
+                </svg>
+                Error
+              </div>
+            ) : likeCount >= 50 ? (
+              <div className="inline-flex items-center gap-2 rounded-full bg-yellow-400/95 px-2 py-0.5 text-xs font-semibold text-black shadow">
+                ★ Popular
+              </div>
+            ) : null}
+
+            {/* Language pill */}
+            <div className="hidden sm:flex items-center gap-2">
+              <span className="text-[11px] font-medium rounded-full px-2.5 py-0.5 bg-muted/60 text-muted-foreground border">
+                #{language}
+              </span>
+            </div>
+          </div>
+
+          {/* Header: avatar + name + tag */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Avatar className="w-10 h-10 ring-1 ring-border/40">
+                <AvatarImage src={ImagePath(profilepic)} alt={owner} />
+                <AvatarFallback>{owner.split(" ").map(n => n[0]).join("")}</AvatarFallback>
+              </Avatar>
+
+              <div className="leading-tight">
+                <Link
+                  to={`/community/${username}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-block"
+                >
+                  <h5 className="text-sm font-semibold hover:underline">{owner}</h5>
+                  <p className="text-xs text-muted-foreground">@{username}</p>
+                </Link>
+              </div>
+            </div>
+
+
+          </div>
+
+          {/* Title */}
+          <h3 className="mt-4 text-base sm:text-lg font-semibold text-primary line-clamp-2">
+            {title}
+          </h3>
+
+          {/* Description with subtle fade (keeps card tidy). Click opens full view (preserves behavior) */}
+          <div className="mt-2 relative">
+            <p className="text-sm leading-relaxed text-muted-foreground line-clamp-4">
+              {description}
+            </p>
+
+            {/* gradient fade to indicate continuation */}
+            <div
+              className="pointer-events-none absolute left-0 right-0 bottom-0 h-8"
+
+            />
+          </div>
+
+          {/* footer: interactions */}
+          <div
+            className="mt-4 flex items-center justify-between gap-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              {/* Like button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const willLike = !isLiked;
+                  handleLikeClick({
+                    e,
+                    _id,
+                    setIsLiked,
+                    setLikeCount,
+                    setLiked
+                  });
+                  // local pulse for micro-interaction
+                  setLikePulse(true);
+                  if (willLike) setShowPlus(true);
+                }}
+                className="relative inline-flex items-center gap-2 rounded-full px-2 py-1 text-sm transition-all duration-150
+                  hover:bg-muted/70 active:scale-95 focus:outline-none"
+                aria-label="Like"
+              >
+                <Heart
+                  className={`h-4 w-4 transition-transform ${isLiked ? "fill-primary text-primary" : "stroke-muted-foreground text-muted-foreground"}`}
+                  style={{ transform: likePulse ? "scale(1.18)" : undefined }}
+                />
+                <span className={`font-medium text-sm transition-transform ${likePulse ? "scale-105" : "scale-100"} ${isLiked ? "text-primary" : "text-muted-foreground"}`}>
+                  {likeLabel}
+                </span>
+
+                {/* +1 floating badge */}
+                {showPlus && (
+                  <span
+                    className="absolute -right-3 -top-5 text-xs font-semibold text-primary"
+                    style={{
+                      transform: "translateY(0)",
+                      animation: "likeFloat 700ms ease-out forwards",
+                   
+                    }}
+                  >
+                    +1
+                  </span>
+                )}
+              </button>
+
+              {/* Comments */}
+              <button
+                onClick={(e) => handleCommentClick({ e, setShowComment })}
+                className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-sm text-muted-foreground "
+              >
+                <MessageCircle className="h-4 w-4" />
+                <span>{comment.length} Comment{comment.length >= 1 ? "s" : ""}</span>
+              </button>
+
+              {/* Engagement mini-bar (visual) */}
+              {/* <div className="hidden sm:flex items-center gap-2 ml-2">
+                <div className="w-24 h-2 bg-muted/20 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${Math.min(100, (likeCount + commentCount) * 1.5)}%`,
+                      background: isError ? "#fb7185" : "linear-gradient(90deg,#7c3aed,#06b6d4)"
+                    }}
+                  />
+                </div>
+              </div> */}
+            </div>
+
+            <div className="text-xs text-muted-foreground">{timeLabel}</div>
+          </div>
+
+
+
+          {showComment && (
+            <div
+              className="mt-3 rounded-xl px-3 animate-in slide-in-from-top-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <CommentSection
+                setIsCmnt={setIsCmnt}
+                isCmnt={isCmnt}
+                username={username}
+                name={name}
+                postId={_id}
+                comments={comment}
+                onClose={() => setShowComment(false)}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Inline keyframes for the +1 float animation */}
+      <style>{`
+        @keyframes likeFloat {
+          0% { transform: translateY(0) scale(1); opacity: 1; }
+          60% { transform: translateY(-18px) scale(1.05); opacity: 0.9; }
+          100% { transform: translateY(-32px) scale(0.95); opacity: 0; }
+        }
+      `}</style>
+    </Card>
+  );
+};
+
+export default PostCard;

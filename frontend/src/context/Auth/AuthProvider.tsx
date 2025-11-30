@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setName(userInfo.name)
             setUserId(userInfo._id)
             setIsAuth(data.success); 
-            setPostCount(userInfo.post?.length || 0)
+            setPostCount(userInfo.post.length || 0)
           } else {
             setIsAuth(false);
           }

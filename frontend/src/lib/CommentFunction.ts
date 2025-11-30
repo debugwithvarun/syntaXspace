@@ -308,10 +308,12 @@ export const handleDeleteComment = async ({
   postId,
   commentId,
   setLocalComments,
+  setIsCmnt
 }: {
   postId: string;
   commentId: string;
   setLocalComments: React.Dispatch<React.SetStateAction<Comment[]>>;
+  setIsCmnt:React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   try {
     const res = await fetch(`/api/syntaxspace/delete-comment`, {
@@ -329,6 +331,7 @@ export const handleDeleteComment = async ({
     setLocalComments((prev) =>
       prev.filter((comment) => comment._id !== commentId)
     );
+    setIsCmnt((prev:boolean)=>!prev)
   } catch (error) {
     console.error("Error deleting comment:", error);
   }
