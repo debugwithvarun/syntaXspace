@@ -31,10 +31,10 @@ const CodeEditor = () => {
     }
     
     useEffect(()=>{
+        if(openView)return
         const defaultCode=languageOptions.find((l)=>l.id===language)
-        // console.log(defaultCode)
         setCode(defaultCode?.boilerplate|| "")
-    },[language,setCode])
+    },[language,setCode,openView])
 
     return (
         <Editor

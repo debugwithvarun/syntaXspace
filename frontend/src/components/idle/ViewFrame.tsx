@@ -40,7 +40,7 @@ const ViewFrame = () => {
 
         const post_data = data.data
 
-
+        console.log(post_data)
         setCode(post_data.code || "")
         setLanguageId(Number(post_data.languageId))
         setStdin(post_data.stdin || "")

@@ -8,13 +8,15 @@ import { useEffect } from "react";
 
 const Signup = () => {
   const navigate = useNavigate();
-  const {setPopUp,setMsg} = usePop();
-  const {isAuth}=useAuth();
-    useEffect(() => {
-      if (isAuth) {
-        navigate('/');
-      }
-    }, [isAuth, navigate]);
+  const { setPopUp, setMsg } = usePop();
+  const { isAuth } = useAuth();
+
+
+  useEffect(() => {
+    if (isAuth) {
+      navigate('/');
+    }
+  }, [isAuth, navigate]);
   const {
     register,
     handleSubmit,
@@ -31,22 +33,22 @@ const Signup = () => {
     confirmPassword: string;
     email: string;
   }) => {
-    try{
-      data.username=data.username.toLowerCase()
+    try {
+      data.username = data.username.toLowerCase()
       const res = await fetch("/api/user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (res.ok){
+      if (res.ok) {
         setMsg("Account Created Successfully !");
         setPopUp("s");
         navigate("/login");
-      }else{
+      } else {
         setMsg("Signup Error")
         setPopUp("e")
       }
-    }catch (error) {
+    } catch (error) {
       console.log("Error  ", error);
       setMsg("Something Went wrong")
       setPopUp("e")
@@ -125,15 +127,15 @@ const Signup = () => {
             )}
           </div>
 
-          {isValid && (
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg hover:from-purple-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-purple-500/50"
-            >
-              {isSubmitting ? "Creating Account..." : "Create Account"}
-            </button>
-          )}
+
+          <button
+            type="submit"
+            disabled={!isValid || isSubmitting}
+            className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg hover:from-purple-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-purple-500/50"
+          >
+            {isSubmitting ? "Creating Account..." : "Create Account"}
+          </button>
+
 
           <p className="text-center text-gray-300 text-sm mt-4">
             Already have an account?{" "}
