@@ -7,9 +7,9 @@ import { useEffect } from "react"
 
 
 const IdleDashboard = () => {
-  const {openView,open,openEdit,setStderr,setStdin,setStdout,setDesc,setTitle}=useIdle()
+  const {openView,open,openEdit,setStderr,setCode,setLanguage,setStdin,setStdout,setDesc,setTitle}=useIdle()
   useEffect(()=>{
-   
+    // setCode("")
     // setLanguage("python")
     setStderr("")
     setStdin("")
@@ -17,7 +17,7 @@ const IdleDashboard = () => {
     setDesc("")
     setTitle("")
 
-  },[setStderr,setStdin,setStdout,setTitle,setDesc])
+  },[setStderr,setCode,setStdin,setStdout,setTitle,setDesc,setLanguage])
 
   return (
   
