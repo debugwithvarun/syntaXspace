@@ -10,7 +10,7 @@ const IdleDashboard = () => {
   const {openView,open,openEdit,setStderr,setCode,setLanguage,setStdin,setStdout,setDesc,setTitle}=useIdle()
   useEffect(()=>{
     // setCode("")
-    // setLanguage("python")
+    setLanguage("python")
     setStderr("")
     setStdin("")
     setStdout("")
