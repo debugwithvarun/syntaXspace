@@ -17,46 +17,51 @@ import IdleDashboard from "./Pages/IdleDashboard"
 import { useIdle } from "./hooks/useIdle"
 import ProfileDashboard from "./Pages/ProfileDashboard"
 import CommunityDashbaord from "./Pages/CommunityDashboard"
+import ChatDashbaord from "./Pages/ChatDashbaord"
+import useChat from "./hooks/useChat"
 
 
 const App = () => {
- const {popUp,msg} =  usePop()
- const {open,openView,openEdit}=useIdle()
+  const { popUp, msg } = usePop()
+  const { open, openView, openEdit } = useIdle()
+  const {openChat}=useChat()
+
   return (
     <>
-   
-    {open&&<IdleDashboard/>}
-    {openView&&<IdleDashboard/>}
-    {openEdit&&<IdleDashboard/>}
-  
-     <div className="fixed z-10 top-6 right-6">
-        {popUp==="e" && <ErrorPopUp msg={msg}/>}
-        {popUp==="s" && <SuccessPopUp msg={msg}/>}
-        {popUp==="w" && <WarningPopUp msg={msg}/>}
-        
+      {openChat && <ChatDashbaord />}
+      {open && <IdleDashboard />}
+      {openView && <IdleDashboard />}
+      {openEdit && <IdleDashboard />}
+
+      <div className="fixed z-10 top-6 right-6">
+        {popUp === "e" && <ErrorPopUp msg={msg} />}
+        {popUp === "s" && <SuccessPopUp msg={msg} />}
+        {popUp === "w" && <WarningPopUp msg={msg} />}
+
       </div>
-     <div className="fixed z-100 bottom-6 left-6">
-        {popUp==="de" && <ErrorPopUp msg={msg}/>}
-        {popUp==="ds" && <SuccessPopUp msg={msg}/>}
-        {popUp==="dw" && <WarningPopUp msg={msg}/>}
-        
+      <div className="fixed z-100 bottom-6 left-6">
+        {popUp === "de" && <ErrorPopUp msg={msg} />}
+        {popUp === "ds" && <SuccessPopUp msg={msg} />}
+        {popUp === "dw" && <WarningPopUp msg={msg} />}
+
       </div>
 
 
-    <Routes >
-     
-      <Route path="/signup" element={<Authentication/>} />
-      <Route path="/login" element={<Authentication/>} />
+      <Routes >
 
-      <Route element={<PrivateRoute/>}>
-        <Route path="/" element={<AppDashboard/>}/>
-        <Route path="/setting" element={<Setting/>}/>
-        <Route path="/network" element={<NetworkDashbaord/>}/>
-        <Route path="/profile/:target_user" element={<ProfileDashboard/>}/>
-        <Route path="/community/:target_user" element={<CommunityDashbaord/>}/>
-        <Route path="/logout" element={<Logout/>}/>
-      </Route>
-    </Routes>
+        <Route path="/signup" element={<Authentication />} />
+        <Route path="/login" element={<Authentication />} />
+
+        <Route element={<PrivateRoute />}>
+          <Route path="/" element={<AppDashboard />} />
+          {/* <Route path="/Chat" element={<ChatDashbaord />} /> */}
+          <Route path="/setting" element={<Setting />} />
+          <Route path="/network" element={<NetworkDashbaord />} />
+          <Route path="/profile/:target_user" element={<ProfileDashboard />} />
+          <Route path="/community/:target_user" element={<CommunityDashbaord />} />
+          <Route path="/logout" element={<Logout />} />
+        </Route>
+      </Routes>
     </>
   )
 }

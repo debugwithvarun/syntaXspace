@@ -1,4 +1,3 @@
-import jwt from "jsonwebtoken"
 import express from "express"
 import User from "../models/User.js";
 const Authrouter=express.Router()

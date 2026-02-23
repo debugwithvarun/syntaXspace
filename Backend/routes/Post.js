@@ -132,28 +132,26 @@ PostRouter.route("/save-post").post(async (req, res) => {
 
     const savedPost = await NewPost.save();
 
-    // ✅ add to author's post array
+    // add to author's post array
     await User.updateOne(
       { username: username },
       { $push: { post: savedPost._id } }
     );
 
-    // ✅ add to author's own feed
+    //  add to author's own feed
     await User.updateOne(
       { username: username },
       { $addToSet: { feeds: savedPost._id } }
     );
 
-    // ✅ add to all followers' feeds
+    // add to all followers' feeds
     const author = await User.findOne(
       { username },
       { follower: 1, _id: 0 }
     );
 
     if (author && Array.isArray(author.follower) && author.follower.length > 0) {
-      const followerUsernames = author.follower
-        .map((f) => f.username)
-        .filter(Boolean);
+      const followerUsernames = author.follower.map((f) => f.username).filter(Boolean);
 
       if (followerUsernames.length > 0) {
         await User.updateMany(

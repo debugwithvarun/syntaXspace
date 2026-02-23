@@ -90,9 +90,7 @@ const PostCard: React.FC<PostSummary> = ({
         ${isError ? "" : ""}
       `}
     >
-      {/* Left accent + main inner card */}
       <div className="flex items-stretch">
-        {/* Accent stripe */}
         <div
           className={`w-1 rounded-l-xl
             ${isError ? "bg-red-500" : "bg-linear-to-b from-primary/80 to-primary/40"}
@@ -100,7 +98,6 @@ const PostCard: React.FC<PostSummary> = ({
           aria-hidden
         />
 
-        {/* Inner content area */}
         <div
           className={`
             w-full bg-background rounded-r-xl p-5 sm:p-6
@@ -109,7 +106,6 @@ const PostCard: React.FC<PostSummary> = ({
             relative
           `}
         >
-          {/* Ribbon badges (top-right) */}
           <div
             className="absolute right-3 top-3 flex items-center gap-2"
             onClick={(e) => e.stopPropagation()}
@@ -127,15 +123,13 @@ const PostCard: React.FC<PostSummary> = ({
               </div>
             ) : null}
 
-            {/* Language pill */}
-            <div className="hidden sm:flex items-center gap-2">
+=            <div className="hidden sm:flex items-center gap-2">
               <span className="text-[11px] font-medium rounded-full px-2.5 py-0.5 bg-muted/60 text-muted-foreground border">
                 #{language}
               </span>
             </div>
           </div>
 
-          {/* Header: avatar + name + tag */}
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10 ring-1 ring-border/40">
@@ -158,31 +152,26 @@ const PostCard: React.FC<PostSummary> = ({
 
           </div>
 
-          {/* Title */}
           <h3 className="mt-4 text-base sm:text-lg font-semibold text-primary line-clamp-2">
             {title}
           </h3>
 
-          {/* Description with subtle fade (keeps card tidy). Click opens full view (preserves behavior) */}
           <div className="mt-2 relative">
             <p className="text-sm leading-relaxed text-muted-foreground line-clamp-4">
               {description}
             </p>
 
-            {/* gradient fade to indicate continuation */}
             <div
               className="pointer-events-none absolute left-0 right-0 bottom-0 h-8"
 
             />
           </div>
 
-          {/* footer: interactions */}
           <div
             className="mt-4 flex items-center justify-between gap-3"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3">
-              {/* Like button */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -194,7 +183,6 @@ const PostCard: React.FC<PostSummary> = ({
                     setLikeCount,
                     setLiked
                   });
-                  // local pulse for micro-interaction
                   setLikePulse(true);
                   if (willLike) setShowPlus(true);
                 }}
@@ -210,7 +198,6 @@ const PostCard: React.FC<PostSummary> = ({
                   {likeLabel}
                 </span>
 
-                {/* +1 floating badge */}
                 {showPlus && (
                   <span
                     className="absolute -right-3 -top-5 text-xs font-semibold text-primary"
@@ -225,7 +212,6 @@ const PostCard: React.FC<PostSummary> = ({
                 )}
               </button>
 
-              {/* Comments */}
               <button
                 onClick={(e) => handleCommentClick({ e, setShowComment })}
                 className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-sm text-muted-foreground "
@@ -234,18 +220,7 @@ const PostCard: React.FC<PostSummary> = ({
                 <span>{comment.length} Comment{comment.length >= 1 ? "s" : ""}</span>
               </button>
 
-              {/* Engagement mini-bar (visual) */}
-              {/* <div className="hidden sm:flex items-center gap-2 ml-2">
-                <div className="w-24 h-2 bg-muted/20 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                      width: `${Math.min(100, (likeCount + commentCount) * 1.5)}%`,
-                      background: isError ? "#fb7185" : "linear-gradient(90deg,#7c3aed,#06b6d4)"
-                    }}
-                  />
-                </div>
-              </div> */}
+  
             </div>
 
             <div className="text-xs text-muted-foreground">{timeLabel}</div>
@@ -272,7 +247,6 @@ const PostCard: React.FC<PostSummary> = ({
         </div>
       </div>
 
-      {/* Inline keyframes for the +1 float animation */}
       <style>{`
         @keyframes likeFloat {
           0% { transform: translateY(0) scale(1); opacity: 1; }

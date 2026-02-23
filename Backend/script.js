@@ -13,6 +13,7 @@ import NewsRouter from './routes/News.js'
 import path from "path";
 import { fileURLToPath } from "url";
 import PostRouter from './routes/Post.js'
+import { ProfileRouter } from './routes/Profile.js'
 
 
 // import User from './models/User.js'
@@ -32,10 +33,9 @@ dotenv.config();
 
 const app = express();
 
-// ✅ CORS configuration
 app.use(cors({
-  origin: "http://localhost:5173", // your frontend URL
-  credentials: true,               // allow cookies (important!)
+  origin: "http://localhost:5173", 
+  credentials: true,               
 }));
 
 app.use(express.json());
@@ -43,10 +43,8 @@ app.use(cookieParser());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ✅ Serve static folder with absolute path
 app.use("/profilepic", express.static(path.join(__dirname, "Public/profilepic")));
 
-// get data from the .env
 const PORT=process.env.PORT;
 const DATABASE_URL=process.env.DATABASE_URL;
 
@@ -54,6 +52,7 @@ ConnectDb(DATABASE_URL);
 
 app.use("/",Userrouter);
 app.use("/",verifyToken,Authrouter);
+app.use("/",verifyToken,ProfileRouter);
 app.use("/",verifyToken,Rcmdrouter)
 app.use("/",verifyToken,Networkrouter)
 app.use("/",verifyToken,NewsRouter)

@@ -7,18 +7,21 @@ import { AuthProvider } from './context/Auth/AuthProvider.tsx'
 import PopUpProvider from './context/PopUp/PopUpProvider.tsx'
 import { NetworkProvider } from './context/Network/NetworkProvider.tsx'
 import IdleProvider from './context/Idle/IdleProvider.tsx'
+import ChatProvider from './context/chat/ChatProvider.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <BrowserRouter>
     <AuthProvider>
-      <IdleProvider>
-        <NetworkProvider>
-          <PopUpProvider>
+      <ChatProvider>
+        <IdleProvider>
+          <NetworkProvider>
+            <PopUpProvider>
 
-            <App />
-          </PopUpProvider>
-        </NetworkProvider>
-      </IdleProvider>
+              <App />
+            </PopUpProvider>
+          </NetworkProvider>
+        </IdleProvider>
+      </ChatProvider>
     </AuthProvider>
   </BrowserRouter>
 
