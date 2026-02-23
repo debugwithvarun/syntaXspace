@@ -4,7 +4,6 @@ import Network from "../models/Network.js";
 
 const Rcmdrouter = express.Router();
 
-// ✅ Get Suggested Users (excluding deleted or hidden users)
 Rcmdrouter.route("/get-rcmd").get(async (req, res) => {
   try {
     const data = req.data;

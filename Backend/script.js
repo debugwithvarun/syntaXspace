@@ -14,6 +14,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import PostRouter from './routes/Post.js'
 import { ProfileRouter } from './routes/Profile.js'
+import chatRouter from './routes/Chat.js'
 
 
 // import User from './models/User.js'
@@ -28,7 +29,7 @@ import { ProfileRouter } from './routes/Profile.js'
 // }
 // makechange()
 
-
+// DirectNewsFetching()
 dotenv.config();
 
 const app = express();
@@ -56,6 +57,7 @@ app.use("/",verifyToken,ProfileRouter);
 app.use("/",verifyToken,Rcmdrouter)
 app.use("/",verifyToken,Networkrouter)
 app.use("/",verifyToken,NewsRouter)
+app.use("/chat",verifyToken,chatRouter)
 app.use("/syntaxspace",verifyToken,PostRouter)
 
 

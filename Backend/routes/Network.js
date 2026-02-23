@@ -166,7 +166,9 @@ Networkrouter
     }
   });
 
-// ✅ ACCEPT FOLLOW REQUEST -> also fill feeds with existing posts
+
+// --------------------- feed update ----------------------
+
 Networkrouter
   .route("/add-receive-request/:username")
   .put(async (req, res) => {
@@ -245,7 +247,6 @@ Networkrouter.route("/get-follower-info").get(async (req, res) => {
   }
 });
 
-// ✅ REMOVE FOLLOWER -> also remove your posts from their feed
 Networkrouter
   .route("/remove-follower/:username")
   .delete(async (req, res) => {
@@ -306,7 +307,6 @@ Networkrouter.route("/get-following-info").get(async (req, res) => {
   }
 });
 
-// ✅ UNFOLLOW SOMEONE -> also remove their posts from your feed
 Networkrouter
   .route("/remove-following/:username")
   .delete(async (req, res) => {

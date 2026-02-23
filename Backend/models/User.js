@@ -11,6 +11,10 @@ const UserSchema = new mongoose.Schema(
       type: [{ username: String, name: String, profilepic: String }],
       default: [],
     },
+    block:{
+      type: [{ username: String, name: String, profilepic: String }],
+      default: [],
+    },
     following: {
       type: [{ username: String, name: String, profilepic: String }],
       default: [],
@@ -20,14 +24,12 @@ const UserSchema = new mongoose.Schema(
     profilepic: { type: String, default: "" },
     verified: { type: Boolean, default: false },
 
-    // FEED: list of post _ids visible in home/feed for this user
     feeds: {
       type: [Schema.Types.ObjectId],
       ref: "Post",
       default: [],
     },
 
-    // POSTS CREATED BY THIS USER
     post: {
       type: [Schema.Types.ObjectId],
       ref: "Post",

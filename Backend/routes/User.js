@@ -11,7 +11,6 @@ import path from "path"
 const Userrouter = express.Router();
 
 
-// creating user accont 
 Userrouter.route("/user").post(async (req, res) => {
     try {
 
@@ -128,9 +127,6 @@ Userrouter.route("/logout").post((req, res) => {
         console.log(error)
     }
 })
-
-
-
 
 
 Userrouter.route("/setting/profile").put(verifyToken, upload.single("profilepic"), async (req, res) => {
