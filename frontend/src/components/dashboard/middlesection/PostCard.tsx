@@ -54,7 +54,6 @@ const PostCard: React.FC<PostSummary> = ({
     fetchComments();
   }, [_id, isCmnt, username]);
 
-  // cleanup for like pulse
   useEffect(() => {
     if (likePulse) {
       const t = setTimeout(() => setLikePulse(false), 350);
@@ -62,7 +61,6 @@ const PostCard: React.FC<PostSummary> = ({
     }
   }, [likePulse]);
 
-  // cleanup for +1 badge
   useEffect(() => {
     if (showPlus) {
       const t = setTimeout(() => setShowPlus(false), 700);
@@ -123,7 +121,7 @@ const PostCard: React.FC<PostSummary> = ({
               </div>
             ) : null}
 
-=            <div className="hidden sm:flex items-center gap-2">
+           <div className="hidden sm:flex items-center gap-2">
               <span className="text-[11px] font-medium rounded-full px-2.5 py-0.5 bg-muted/60 text-muted-foreground border">
                 #{language}
               </span>
