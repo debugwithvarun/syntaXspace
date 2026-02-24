@@ -7,16 +7,24 @@ const UserSchema = new mongoose.Schema(
     email: { type: String, required: true, trim: true, unique: true },
     password: { type: String, required: true },
 
+    // Changed to Reference IDs
     follower: {
-      type: [{ username: String, name: String, profilepic: String }],
+      type: [Schema.Types.ObjectId],
+      ref: "User",
       default: [],
     },
-    block:{
-      type: [{ username: String, name: String, profilepic: String }],
-      default: [],
-    },
+    
+    // Changed to Reference IDs
     following: {
-      type: [{ username: String, name: String, profilepic: String }],
+      type: [Schema.Types.ObjectId],
+      ref: "User",
+      default: [],
+    },
+
+    // Changed to Reference IDs
+    block: {
+      type: [Schema.Types.ObjectId],
+      ref: "User",
       default: [],
     },
 

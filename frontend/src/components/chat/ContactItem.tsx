@@ -1,50 +1,119 @@
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { cn } from "@/lib/utils";
 
-export const ContactItem = ({ contact, isActive, onClick }) => (
+interface ContactItemProps {
+  name: string;
+  avatar?: string;
+  subtitle?: string;
+  time?: string;
+  isActive: boolean;
+  onClick: () => void;
+
+  // NEW FEATURES
+  unreadCount?: number;
+  isOnline?: boolean;
+  isDeletedMessage?: boolean;
+  prefix?: string; // e.g. "You:"
+  onRightAction?: () => void; // optional menu action
+}
+
+export const ContactItem = ({
+  name,
+  avatar,
+  subtitle,
+  time,
+  isActive,
+  onClick,
+  unreadCount,
+  isOnline,
+  isDeletedMessage,
+  prefix,
+  onRightAction,
+}: ContactItemProps) => {
+  const initials =
+    name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase() || "U";
+
+  return (
     <button
       onClick={onClick}
-      className={`w-full flex items-start gap-3 p-3 rounded-lg transition-all text-left group ${
-        isActive 
-          ? "bg-primary/10 text-accent-foreground" 
+      className={cn(
+        "w-full flex items-start gap-3 p-3 rounded-lg transition-all text-left group relative",
+        isActive
+          ? "bg-primary/10"
           : "hover:bg-muted/60"
-      }`}
+      )}
     >
+      {/* Avatar */}
       <div className="relative mt-0.5">
         <Avatar className="h-11 w-11 border border-background shadow-sm">
-          <AvatarImage src={contact.avatar} alt={contact.name} />
+          <AvatarImage src={avatar || ""} alt={name} />
           <AvatarFallback className="bg-muted text-muted-foreground font-medium">
-            {contact.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+            {initials}
           </AvatarFallback>
         </Avatar>
-        {contact.online && (
-          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 border-2 border-background rounded-full bg-green-500 z-10" />
+
+        {/* Online Indicator */}
+        {isOnline && (
+          <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-background rounded-full" />
         )}
       </div>
-      
+
+      {/* Content */}
       <div className="flex-1 overflow-hidden">
         <div className="flex justify-between items-center mb-0.5">
-          <span className={`font-medium text-sm truncate ${isActive ? 'text-primary' : 'text-foreground'}`}>
-            {contact.name}
+          <span
+            className={cn(
+              "font-medium text-sm truncate",
+              isActive ? "text-primary" : "text-foreground"
+            )}
+          >
+            {name}
           </span>
-          <span className={`text-xs whitespace-nowrap ml-2 ${contact.unread > 0 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
-            {contact.time}
+
+          <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+            {time}
           </span>
         </div>
-        <div className="flex justify-between items-center h-5">
-          {contact.isTyping ? (
-            <span className="text-xs text-primary animate-pulse font-medium">Typing...</span>
-          ) : (
-            <span className="text-sm text-muted-foreground truncate pr-2">
-              {contact.lastMessage}
-            </span>
-          )}
-          
-          {contact.unread > 0 && (
-            <span className="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-[10px] font-bold text-primary-foreground bg-primary rounded-full shadow-sm">
-              {contact.unread}
+
+        <div className="flex justify-between items-center">
+          <span
+            className={cn(
+              "text-sm truncate pr-2 ",
+              isDeletedMessage
+                ? "italic text-muted-foreground"
+                : "text-muted-foreground"
+            )}
+          >
+            {prefix && <span className="font-medium mr-1">{prefix}</span>}
+            {isDeletedMessage ? "Message deleted" : subtitle}
+          </span>
+
+          {/* Unread Badge */}
+          {unreadCount && unreadCount > 0 && (
+            <span className="ml-2 min-w-[20px] h-5 px-1.5 bg-primary text-primary-foreground text-xs font-medium rounded-full flex items-center justify-center">
+              {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
         </div>
       </div>
+
+      {/* Optional Right Action (like 3-dot menu) */}
+      {onRightAction && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRightAction();
+          }}
+          className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition text-muted-foreground hover:text-foreground"
+        >
+          •••
+        </button>
+      )}
     </button>
-  )
+  );
+};

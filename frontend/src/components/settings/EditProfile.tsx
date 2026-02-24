@@ -99,7 +99,6 @@ const EditProfile = () => {
 
       const data = await res.json();
       if (res.ok) {
-        // console.log("✅ Profile updated:", data);
         setProfilePic(data.profile)
         setMsg("Profile updated successfully!");
         setPopUp("ds")
