@@ -8,19 +8,21 @@ import PopUpProvider from './context/PopUp/PopUpProvider.tsx'
 import { NetworkProvider } from './context/Network/NetworkProvider.tsx'
 import IdleProvider from './context/Idle/IdleProvider.tsx'
 import ChatProvider from './context/chat/ChatProvider.tsx'
+import { NotificationProvider } from './context/Notification/NotificationProvider.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <BrowserRouter>
     <AuthProvider>
       <ChatProvider>
-        <IdleProvider>
-          <NetworkProvider>
-            <PopUpProvider>
-
-              <App />
-            </PopUpProvider>
-          </NetworkProvider>
-        </IdleProvider>
+        <NotificationProvider>
+          <IdleProvider>
+            <NetworkProvider>
+              <PopUpProvider>
+                <App />
+              </PopUpProvider>
+            </NetworkProvider>
+          </IdleProvider>
+        </NotificationProvider>
       </ChatProvider>
     </AuthProvider>
   </BrowserRouter>

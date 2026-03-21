@@ -13,15 +13,17 @@ export interface User {
 }
 
 /* ================================
-   MESSAGE
+   MESSAGE (full receipt info)
 ================================ */
 export interface Message {
   _id: string;
-  sender: User | string;          // populated OR just id
+  sender: User | string;
   content: string;
   conversation: string;
-  media?: string;
-  readBy?: string[];
+  mediaUrl?: string;
+  mediaType?: "image" | "video" | "file" | "";
+  readBy?: { _id: string; name?: string }[];
+  deliveredTo?: { _id: string; name?: string }[];
   isDeleted?: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -43,6 +45,23 @@ export interface Chat {
 }
 
 /* ================================
+   VIDEO CALL
+================================ */
+export type CallState = "idle" | "calling" | "incoming" | "active";
+
+export interface IncomingCallInfo {
+  callerId: string;
+  callerInfo: { name: string; username: string; profilepic: string };
+  offer: RTCSessionDescriptionInit;
+  callType: "video" | "audio";
+}
+
+/* ================================
+   MESSAGE RECEIPT STATUS
+================================ */
+export type MessageStatus = "sending" | "sent" | "delivered" | "read";
+
+/* ================================
    CONTEXT PROPS
 ================================ */
 type ChatContextProps = {
@@ -56,6 +75,12 @@ type ChatContextProps = {
   chats: Chat[];
   selectedChat: Chat | null;
   messages: Message[];
+
+  // Online users
+  onlineUsers: Set<string>;
+
+  // Typing
+  typingUsers: Record<string, boolean>; // conversationId → isTyping
 
   // Core Actions
   setSelectedChat: (chat: Chat | null) => void;
@@ -71,11 +96,34 @@ type ChatContextProps = {
   searchResult: User[];
   setSearchResult: (users: User[]) => void;
 
+  // Typing
+  startTyping: () => void;
+  stopTyping: () => void;
+
   // Loading
   loadingChat: boolean;
 
   // Utilities
   clearMessages: () => void;
+  getMessageStatus: (msg: Message) => MessageStatus;
+
+  // Block / Unblock
+  blockedUsers: string[];
+  blockUser: (userId: string) => Promise<void>;
+  unblockUser: (userId: string) => Promise<void>;
+  isBlocked: (userId: string) => boolean;
+  fetchBlockedUsers: () => Promise<void>;
+
+  // Video Call
+  callState: CallState;
+  callType: "video" | "audio";
+  incomingCall: IncomingCallInfo | null;
+  localStream: MediaStream | null;
+  remoteStream: MediaStream | null;
+  initiateCall: (targetUserId: string, targetInfo: { name: string; username: string; profilepic: string }, type?: "video" | "audio") => Promise<void>;
+  acceptCall: () => Promise<void>;
+  rejectCall: () => void;
+  endCall: () => void;
 };
 
 const ChatContext = createContext<ChatContextProps | null>(null);

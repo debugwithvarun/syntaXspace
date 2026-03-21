@@ -1,68 +1,110 @@
+import { useEffect, useState } from "react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import useChat from "@/hooks/useChat";
+import { ShieldBan, ShieldCheck, UserX } from "lucide-react";
+import { Link } from "react-router-dom";
 
-import { ScrollArea } from "../ui/scroll-area";
-import { Separator } from "../ui/separator";
-import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { Button } from "../ui/button";
-
-const Block = () => {
-  return (
-    <div className="h-[90vh] w-full flex justify-center items-start ">
-      <div className="w-full max-w-4xl rounded-xl ">
-        <ScrollArea className="h-[70vh] lg:h-[80vh] rounded-xl px-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Password & Security</CardTitle>
-              <CardDescription>
-                Change your password here. After saving, you'll be logged out.
-              </CardDescription>
-
-              <div className="grid grid-rows-1 gap-4 py-4 px-4">
-                {/* user profile  */}
-               {[...Array(20)].map((_)=>(
-              <>
-                <div className="w-full flex items-center justify-between py-2">
-                  <div className="flex items-center gap-3 pr-12">
-                    <div className="w-[33px] h-[33px] bg-secondary aspect-square rounded-full flex justify-center items-center text-white font-semibold">
-                      SM
-                    </div>
-
-                    <div className="space-y-0.5">
-                      <p>
-                        <a
-                          className="text-sm font-medium hover:underline"
-                          href="#"
-                        >
-                          Shaziya Malik
-                        </a>
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        @shaziya
-                      </p>
-                    </div>
-                  </div>
-
-                
-                    <Button
-                      variant="secondary"
-                      className="px-2 py-1 transition-all"
-                      
-                    >
-                      UnBlock
-                    </Button>
-                 
-
-             
-                </div>
-                <Separator />
-              </>
-              ))}
-              </div>
-            </CardHeader>
-          </Card>
-        </ScrollArea>
-      </div>
-    </div>
-  );
+type BlockedUser = {
+  _id: string;
+  name: string;
+  username: string;
+  profilepic: string;
 };
 
-export default Block;
+export default function Block() {
+  const { unblockUser } = useChat();
+  const [users, setUsers] = useState<BlockedUser[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchBlocked = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/blocked-users", { credentials: "include" });
+      if (!res.ok) return;
+      const data = await res.json();
+      setUsers(Array.isArray(data.data) ? data.data : []);
+    } catch {
+      // silent
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBlocked();
+  }, []);
+
+  const handleUnblock = async (userId: string) => {
+    await unblockUser(userId);
+    setUsers((prev) => prev.filter((u) => u._id !== userId));
+  };
+
+  return (
+    <Card className="border-0 shadow-none">
+      <CardHeader className="pb-4">
+        <div className="flex items-center gap-2">
+          <ShieldBan className="h-5 w-5 text-muted-foreground" />
+          <CardTitle className="text-base font-semibold">Blocked Users</CardTitle>
+        </div>
+        <CardDescription className="text-sm">
+          Blocked users cannot message you or appear in your search results.
+        </CardDescription>
+      </CardHeader>
+
+      <Separator />
+
+      <CardContent className="pt-5">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : users.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-14 gap-3 text-muted-foreground">
+            <ShieldCheck className="h-10 w-10 opacity-20" />
+            <p className="text-sm font-medium">No blocked users</p>
+            <p className="text-xs opacity-70">People you block will appear here.</p>
+          </div>
+        ) : (
+          <ul className="space-y-3">
+            {users.map((user) => (
+              <li
+                key={user._id}
+                className="flex items-center justify-between gap-3 p-3 rounded-xl border bg-muted/20 hover:bg-muted/40 transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <Avatar className="h-10 w-10 shrink-0">
+                    <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+                      {user.name?.[0]?.toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <Link
+                      to={`/profile/${user.username}`}
+                      className="font-medium text-sm hover:underline truncate block"
+                    >
+                      {user.name}
+                    </Link>
+                    <p className="text-xs text-muted-foreground">@{user.username}</p>
+                  </div>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 text-green-600 border-green-500/40 hover:bg-green-50 hover:text-green-700 rounded-full h-8 text-xs gap-1.5"
+                  onClick={() => handleUnblock(user._id)}
+                >
+                  <UserX className="h-3.5 w-3.5" />
+                  Unblock
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

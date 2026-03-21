@@ -4,7 +4,6 @@ import PrivateRoute from "./Routes/PrivateRoute"
 
 
 import AppDashboard from "./Pages/AppDashboard"
-// import { useEffect, useState } from "react"
 import ErrorPopUp from "./components/popup/errorPopUp"
 import SuccessPopUp from "./components/popup/sucessPopUp"
 import WarningPopUp from "./components/popup/warningPopUp"
@@ -19,6 +18,7 @@ import ProfileDashboard from "./Pages/ProfileDashboard"
 import CommunityDashbaord from "./Pages/CommunityDashboard"
 import ChatDashbaord from "./Pages/ChatDashbaord"
 import useChat from "./hooks/useChat"
+import { VideoCall } from "./components/chat/VideoCall"
 
 
 const App = () => {
@@ -32,6 +32,9 @@ const App = () => {
       {open && <IdleDashboard />}
       {openView && <IdleDashboard />}
       {openEdit && <IdleDashboard />}
+
+      {/* Global Video Call Overlay */}
+      <VideoCall />
 
       <div className="fixed z-10 top-6 right-6">
         {popUp === "e" && <ErrorPopUp msg={msg} />}

@@ -24,10 +24,11 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog"
 
-import { UserPlus, Mail } from "lucide-react"
+import { UserPlus, Mail, Ban, ShieldCheck } from "lucide-react"
 import ImagePath from "@/lib/ImagePath"
 import type { MiniUser, NetworkStats } from "./LeftSection"
 import { useAuth } from "@/hooks/useAuth"
+import useChat from "@/hooks/useChat"
 
 const formatCount = (value: number) => {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
@@ -152,11 +153,44 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
   const hasSkills = Boolean(networkStats.skills && networkStats.skills.length)
 
   const { username } = useAuth()
+  const { blockUser, unblockUser, isBlocked } = useChat()
   const isOwnProfile = username === networkStats.username
   const [inviteStatus, setInviteStatus] = useState<InviteStatus>("loading")
   const [actionLoading, setActionLoading] = useState(false)
+  const [blockActionLoading, setBlockActionLoading] = useState(false)
+
+  // For block we need the target user's _id
+  // We'll fetch it if not available
+  const [targetId, setTargetId] = useState<string | null>(null)
 
   const targetUsername = networkStats.username
+
+  // Fetch targetId for block actions
+  useEffect(() => {
+    if (!targetUsername || isOwnProfile) return;
+    fetch(`/api/get-about-info/${targetUsername}`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.data?._id) setTargetId(d.data._id);
+      })
+      .catch(() => {});
+  }, [targetUsername, isOwnProfile]);
+
+  const blocked = targetId ? isBlocked(targetId) : false;
+
+  const handleToggleBlock = async () => {
+    if (!targetId) return;
+    setBlockActionLoading(true);
+    try {
+      if (blocked) {
+        await unblockUser(targetId);
+      } else {
+        await blockUser(targetId);
+      }
+    } finally {
+      setBlockActionLoading(false);
+    }
+  };
 
   const fetchStatus = useCallback(async () => {
     if (!targetUsername || isOwnProfile) {
@@ -323,7 +357,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
               />
             </div>
 
-            {/* Actions: Invite + Get in touch */}
+            {/* Actions: Invite + Get in touch + Block */}
             {!isOwnProfile && (
               <div className="mt-1.5 flex flex-wrap gap-2">
                 {inviteStatus === "already" ? (
@@ -376,6 +410,46 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
                   <Mail className="h-3.5 w-3.5 mr-1.5" />
                   Get in touch
                 </Button>
+
+                {/* Block / Unblock */}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className={`rounded-full px-3 h-8 text-xs ${
+                        blocked
+                          ? "text-green-600 border-green-500/40 hover:bg-green-50"
+                          : "text-destructive border-destructive/30 hover:bg-destructive/5"
+                      }`}
+                      disabled={blockActionLoading || !targetId}
+                    >
+                      {blocked ? (
+                        <><ShieldCheck className="h-3.5 w-3.5 mr-1.5" />Unblock</>
+                      ) : (
+                        <><Ban className="h-3.5 w-3.5 mr-1.5" />Block</>
+                      )}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        {blocked ? "Unblock" : "Block"} @{networkStats.username}?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {blocked
+                          ? "They will be able to interact with you again."
+                          : "They won't be able to message you or appear in your search results."}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleToggleBlock}>
+                        Yes, {blocked ? "unblock" : "block"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             )}
           </div>

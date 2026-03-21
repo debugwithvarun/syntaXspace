@@ -1,8 +1,10 @@
 import express from "express";
 import Network from "../models/Network.js";
 import User from "../models/User.js";
+import Notification from "../models/Notification.js";
 
 const Networkrouter = express.Router();
+
 
 // --------------------- Friend Request Logic ----------------------
 
@@ -52,6 +54,24 @@ Networkrouter.route("/sent-request").put(async (req, res) => {
       { username: target },
       { $push: { requsetGet: sender_data } }
     );
+
+    // 🔔 Create a notification for the target user
+    const senderUser = await User.findOne({ username: username }, { _id: 1 });
+    const targetUser = await User.findOne({ username: target }, { _id: 1 });
+    if (senderUser && targetUser) {
+      const notif = await Notification.create({
+        recipient: targetUser._id,
+        sender: senderUser._id,
+        type: "follow_request",
+        message: `${sender_data.name} sent you a follow request`,
+        link: `/profile/${username}`,
+      });
+      // Emit real-time notification to target if online
+      if (req.io) {
+        const populated = await notif.populate("sender", "name username profilepic");
+        req.io.to(targetUser._id.toString()).emit("new-notification", populated);
+      }
+    }
 
     res.status(200).json({ msg: "Invite Sent!" });
   } catch (error) {
@@ -214,6 +234,19 @@ Networkrouter.route("/add-receive-request/:username").put(async (req, res) => {
           },
         }
       );
+    }
+
+    // 🔔 Notify the requester that their follow was accepted
+    const notif = await Notification.create({
+      recipient: targetUser._id,
+      sender: currentUser._id,
+      type: "follow_accepted",
+      message: `${currentUser.name} accepted your follow request`,
+      link: `/profile/${username}`,
+    });
+    if (req.io) {
+      const populated = await notif.populate("sender", "name username profilepic");
+      req.io.to(targetUser._id.toString()).emit("new-notification", populated);
     }
 
     return res.status(200).json({ msg: "Invite accepted successfully" });

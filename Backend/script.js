@@ -18,6 +18,7 @@ import NewsRouter, { scheduleNewsFetching } from "./routes/News.js";
 import PostRouter from "./routes/Post.js";
 import { ProfileRouter } from "./routes/Profile.js";
 import chatRouter from "./routes/Chat.js";
+import NotificationRouter from "./routes/Notification.js";
 
 dotenv.config();
 
@@ -65,6 +66,7 @@ app.use("/", verifyToken, ProfileRouter);
 app.use("/", verifyToken, Rcmdrouter);
 app.use("/", verifyToken, Networkrouter);
 app.use("/", verifyToken, NewsRouter);
+app.use("/", verifyToken, NotificationRouter);
 app.use("/chat", verifyToken, chatRouter);
 app.use("/syntaxspace", verifyToken, PostRouter);
 
@@ -73,7 +75,7 @@ app.use("/syntaxspace", verifyToken, PostRouter);
 ============================ */
 
 const server = http.createServer(app);
-setupSocket(server);
+setupSocket(server, app);
 
 /* ============================
    START SERVER

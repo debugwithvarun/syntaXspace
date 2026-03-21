@@ -232,4 +232,55 @@ Userrouter.route("/setting/profile").put(verifyToken, upload.single("profilepic"
 
 
 
-export default Userrouter;
+/* =========================================================
+   BLOCK / UNBLOCK
+========================================================= */
+
+Userrouter.put("/block/:targetId", verifyToken, async (req, res) => {
+  try {
+    const { _id: myId } = req.data;
+    const { targetId } = req.params;
+
+    if (myId === targetId)
+      return res.status(400).json({ msg: "Cannot block yourself" });
+
+    await User.updateOne({ _id: myId }, { $addToSet: { block: targetId } });
+    return res.status(200).json({ msg: "User blocked" });
+  } catch (error) {
+    console.error("Block error:", error);
+    return res.status(500).json({ msg: "Server error" });
+  }
+});
+
+Userrouter.put("/unblock/:targetId", verifyToken, async (req, res) => {
+  try {
+    const { _id: myId } = req.data;
+    const { targetId } = req.params;
+
+    await User.updateOne({ _id: myId }, { $pull: { block: targetId } });
+    return res.status(200).json({ msg: "User unblocked" });
+  } catch (error) {
+    console.error("Unblock error:", error);
+    return res.status(500).json({ msg: "Server error" });
+  }
+});
+
+Userrouter.get("/blocked-users", verifyToken, async (req, res) => {
+  try {
+    const { _id: myId } = req.data;
+
+    const user = await User.findById(myId, { block: 1 }).populate(
+      "block",
+      "name username profilepic"
+    );
+
+    if (!user) return res.status(404).json({ msg: "User not found" });
+
+    return res.status(200).json({ success: true, data: user.block });
+  } catch (error) {
+    console.error("Get blocked users error:", error);
+    return res.status(500).json({ msg: "Server error" });
+  }
+});
+
+export default Userrouter;

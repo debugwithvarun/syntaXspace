@@ -1,6 +1,9 @@
 import express from "express"
 import User from "../models/User.js";
+import Network from "../models/Network.js";
 import bcrypt from "bcrypt"
+import fs from "fs"
+import path from "path"
 
 export const ProfileRouter=express.Router()
 
@@ -121,17 +124,17 @@ ProfileRouter.route("/setting/security").put (async (req, res) => {
         return res.status(401).json({ msg: "Incorrect password" });
       }
   
-      // 1️⃣ Remove this user from all other users' followers/following
+      // 1️⃣ Remove this user from all other users' followers/following (ID-based)
       await User.updateMany(
-        { "follower.username": username },
-        { $pull: { follower: { username } } }
+        { follower: user._id },
+        { $pull: { follower: user._id } }
       );
       await User.updateMany(
-        { "following.username": username },
-        { $pull: { following: { username } } }
+        { following: user._id },
+        { $pull: { following: user._id } }
       );
   
-      // 2️⃣ Remove from all Network request arrays
+      // 2️⃣ Remove from all Network request arrays (username-based, Network still uses objects)
       await Network.updateMany(
         { "requsetSent.username": username },
         { $pull: { requsetSent: { username } } }
@@ -183,7 +186,7 @@ ProfileRouter.route("/setting/security").put (async (req, res) => {
       const user = await User.findOne(
         { username },
         {
-          _id: 0,
+          _id: 1,
           name: 1,
           username: 1,
           bio: 1,

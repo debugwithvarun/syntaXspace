@@ -21,7 +21,7 @@ export default function SettingInner() {
     <Tabs
       defaultValue={"tab-1"}
       orientation="vertical"
-      className="w-[80%] h-full flex-row p-6 gap-0 "
+      className="w-[80%] h-full flex-row p-6 gap-6 "
     >
       <TabsList className=" items-start flex-col gap-1 rounded-xl shadow-md bg-background  h-fit  justify-start px-4  py-6 text-foreground">
         <h6 className=" pl-2 text-sm font-medium pb-1">Settings</h6>

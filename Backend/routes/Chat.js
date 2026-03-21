@@ -12,6 +12,20 @@ chatRouter.get("/users", async (req, res) => {
   try {
     const currentUserId = req.user._id;
 
+    // Fetch the current user's block list
+    const currentUser = await User.findById(currentUserId, { block: 1 });
+    const myBlockedIds = currentUser?.block || [];
+
+    // Also find users who have blocked the current user
+    const usersWhoBlockedMe = await User.find(
+      { block: currentUserId },
+      { _id: 1 }
+    );
+    const blockedByIds = usersWhoBlockedMe.map((u) => u._id);
+
+    // All IDs to exclude from search
+    const excludeIds = [currentUserId, ...myBlockedIds, ...blockedByIds];
+
     const keyword = req.query.search
       ? {
           $or: [
@@ -21,9 +35,10 @@ chatRouter.get("/users", async (req, res) => {
         }
       : {};
 
-    const users = await User.find(keyword)
-      .find({ _id: { $ne: currentUserId } })
-      .select("name username profilepic email");
+    const users = await User.find({
+      ...keyword,
+      _id: { $nin: excludeIds },
+    }).select("name username profilepic email");
 
     res.status(200).json(users);
   } catch (error) {
@@ -137,12 +152,26 @@ chatRouter.get("/messages/:chatId", async (req, res) => {
       conversation: chatId,
       isDeleted: false,
     })
-      .populate("sender", "name profilepic email")
+      .populate("sender", "name profilepic email username")
+      .populate("readBy", "_id name")
+      .populate("deliveredTo", "_id name")
       .sort({ createdAt: 1 });
+
+    // Mark messages as read (HTTP path — socket will also handle this)
+    await Message.updateMany(
+      {
+        conversation: chatId,
+        sender: { $ne: currentUserId },
+        readBy: { $ne: currentUserId },
+        isDeleted: false,
+      },
+      { $addToSet: { readBy: currentUserId } }
+    );
 
     // Reset unread count
     conversation.unreadCounts.set(currentUserId.toString(), 0);
     await conversation.save();
+
 
     res.status(200).json(messages);
 

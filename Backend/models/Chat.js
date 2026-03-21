@@ -20,6 +20,7 @@ const conversationSchema = new mongoose.Schema(
       ref: "Message",
     },
 
+    // Unread message count per participant userId (string key)
     unreadCounts: {
       type: Map,
       of: Number,
@@ -27,7 +28,6 @@ const conversationSchema = new mongoose.Schema(
     },
 
     isDeleted: { type: Boolean, default: false },
-
     lastMessageAt: { type: Date },
   },
   { timestamps: true }
@@ -49,17 +49,26 @@ const messageSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Media (future)
+    mediaUrl: { type: String, default: "" },
+    mediaType: { type: String, enum: ["image", "video", "file", ""], default: "" },
+
     isDeleted: { type: Boolean, default: false },
+
+    // 📬 Delivery receipts
+    // deliveredTo: users who received the message (socket delivered)
+    deliveredTo: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+    ],
+
+    // 👁️ Read receipts
+    // readBy: users who have READ (opened that chat) the message
+    readBy: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+    ],
   },
   { timestamps: true }
 );
 
-export const Conversation = mongoose.model(
-  "Conversation",
-  conversationSchema
-);
-
-export const Message = mongoose.model(
-  "Message",
-  messageSchema
-);
+export const Conversation = mongoose.model("Conversation", conversationSchema);
+export const Message = mongoose.model("Message", messageSchema);
