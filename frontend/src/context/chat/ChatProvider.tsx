@@ -160,7 +160,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         return prev;
       });
     };
-
+// /
     /* SIDEBAR UPDATE */
     const handleConversationUpdated = (updated: Chat) => {
       setChats((prev) => {
