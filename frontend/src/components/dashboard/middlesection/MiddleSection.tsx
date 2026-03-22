@@ -2,6 +2,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import PostCard from "./PostCard";
 import { useEffect, useState } from "react";
 import usePop from "@/hooks/usePop";
+import { apiFetch } from "@/lib/api";
 
 export type PostSummary = {
   _id: string
@@ -41,9 +42,7 @@ const MiddleSection = () => {
   useEffect(()=>{
     try {
       const fetchData=async()=>{
-        const res=await fetch("/api/syntaxspace/feed",{
-          credentials:"include"
-        })
+        const res = await apiFetch("/syntaxspace/feed")
         if(!res.ok){
           setMsg("Failed to fetch feed")
           setPopUp("de")

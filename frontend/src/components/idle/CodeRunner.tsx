@@ -6,6 +6,7 @@ import { useIdle } from '@/hooks/useIdle'
 import { Label } from '../ui/label'
 import { useEffect, useState } from 'react'
 import { Spinner } from '../ui/spinner'
+import { apiFetch } from '@/lib/api'
 
 const CodeRunner = () => {
   const {
@@ -48,11 +49,8 @@ const CodeRunner = () => {
   const handleRunCode = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/syntaxspace/run-code', {
+      const response = await apiFetch('/syntaxspace/run-code', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           language_id: languageId,
           source_code: code,

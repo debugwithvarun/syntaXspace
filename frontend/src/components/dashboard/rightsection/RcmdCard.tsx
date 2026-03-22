@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Card } from '@/components/ui/card';
-
 import PeopleYouMayKnow from './PeopleYouMayKnow';
 import { ScrollArea } from '@/components/ui/scroll-area'; 
+import { apiFetch } from '@/lib/api';
 type UserField = {
     name: string;
     username: string;
@@ -16,7 +16,7 @@ const RcmdCard = () => {
         const getRcmd = async () => {
             try {
                 setRcmd([])
-                const res = await fetch("/api/get-rcmd");
+                const res = await apiFetch("/get-rcmd");
                 const data = await res.json();
                 const userField: UserField[] = data.rcmd;
                 setRcmd((prev) => [...prev, ...userField]);

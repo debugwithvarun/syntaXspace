@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Card } from '@/components/ui/card' 
 import { ScrollArea } from '@/components/ui/scroll-area' 
 import NewsField from './NewsField'
+import { apiFetch } from '@/lib/api'
 
 type articleProps = {
   headline: string,
@@ -13,7 +14,7 @@ const NewsCard = () => {
   const [article, setArticle] = useState<articleProps[]>([])
   useEffect(() => {
     const getData = async () => {
-      const res = await fetch("/api/get-news")
+      const res = await apiFetch("/get-news")
       if (res.ok) {
         const {article} = await res.json()
         setArticle(article)
