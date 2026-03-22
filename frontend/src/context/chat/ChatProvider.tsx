@@ -10,8 +10,10 @@ import ChatContext, {
 } from "./ChatContext";
 import { useAuth } from "@/hooks/useAuth";
 
-const ENDPOINT = "http://localhost:8000";
-const BACKEND = "http://localhost:8000";
+// `const ENDPOINT = "http://localhost:8000";
+// const BACKEND = "http://localhost:8000";`
+const ENDPOINT = "http://16.171.197.228:8000";
+const BACKEND = "http://16.171.197.228:8000";
 
 const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const { _id: currentUserId } = useAuth();

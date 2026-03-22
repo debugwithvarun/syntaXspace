@@ -11,7 +11,7 @@ import useChat from "@/hooks/useChat";
 import { type User } from "@/context/chat/ChatContext";
 import ImagePath from "@/lib/ImagePath";
 
-const BACKEND_URL = "http://localhost:8000";
+const BACKEND_URL = "http://16.171.197.228:8000";
 
 export const ChatSidebar = () => {
   const { profilepic, name, _id: myId } = useAuth();
@@ -57,7 +57,7 @@ export const ChatSidebar = () => {
     }, 400);
 
     return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
   /* ─── SORTED CHATS ─── */
@@ -210,9 +210,9 @@ export const ChatSidebar = () => {
                     time={
                       chat.latestMessage
                         ? new Date(chat.latestMessage.createdAt).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
                         : ""
                     }
                     isActive={isActive}
