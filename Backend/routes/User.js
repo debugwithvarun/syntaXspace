@@ -127,6 +127,7 @@ Userrouter.route("/login").post(async (req, res) => {
 
     return res.status(200).json({
       message: "Login successful",
+      token,  // FIX 7b: Include token in body so frontend can store in localStorage
       userInfo: {
         _id: user._id,
         username: user.username,

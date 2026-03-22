@@ -22,6 +22,7 @@ import usePop from "@/hooks/usePop"
 import ProfileShimmer from "../Skelton/ProfileShimmer"
 import ImagePath from "@/lib/ImagePath"
 import { Link } from "react-router-dom"
+import { apiFetch } from "@/lib/api"
 
 // const people = [
 //     {
@@ -53,7 +54,7 @@ export function ProfileRecieve() {
             setLoading(true);
             try {
 
-                const res = await fetch(`/api/get-recieve-requests`);
+                const res = await apiFetch(`/get-recieve-requests`);
 
                 if (res.ok) {
                     const { data } = await res.json();
@@ -82,11 +83,8 @@ export function ProfileRecieve() {
 
     const RemoveInvite = async (username: string) => {
         try {
-            const res = await fetch(`/api/delete-recieve-request/${encodeURIComponent(username)}`, {
+            const res = await apiFetch(`/delete-recieve-request/${encodeURIComponent(username)}`, {
                 method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                }
             })
             if (res.ok) {
 
@@ -109,11 +107,8 @@ export function ProfileRecieve() {
 
     const AcceptInvite = async (username: string) => {
         try {
-            const res = await fetch(`/api/add-receive-request/${encodeURIComponent(username)}`, {
+            const res = await apiFetch(`/add-receive-request/${encodeURIComponent(username)}`, {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                }
             })
             if (res.ok) {
 

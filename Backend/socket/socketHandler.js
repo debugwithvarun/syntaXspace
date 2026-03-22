@@ -1,4 +1,5 @@
 import { Server } from "socket.io";
+import jwt from "jsonwebtoken";
 import { Conversation, Message } from "../models/Chat.js";
 import User from "../models/User.js";
 import Notification from "../models/Notification.js";
@@ -30,9 +31,26 @@ const isUserOnline = (userId) => onlineUsers.has(userId);
 export const setupSocket = (server, app) => {
   const io = new Server(server, {
     cors: {
-      origin: "http://localhost:5173",
+      // FIX 8: Use exact S3 origin from env (same as Express CORS)
+      origin: process.env.CLIENT_URL,
       credentials: true,
+      allowedHeaders: ["Content-Type", "Authorization"],
     },
+  });
+
+  // FIX 8: Token-based socket auth middleware
+  io.use((socket, next) => {
+    const token = socket.handshake.auth?.token;
+    if (!token) {
+      return next(new Error("Unauthorized: no token"));
+    }
+    try {
+      const decoded = jwt.verify(token, process.env.SECRET);
+      socket.user = decoded;
+      next();
+    } catch {
+      return next(new Error("Unauthorized: invalid token"));
+    }
   });
 
   // Attach io to express app so routes can emit notifications

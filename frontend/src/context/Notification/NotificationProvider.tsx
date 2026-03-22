@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import NotificationContext, { type Notification } from "./NotificationContext";
 import { useChat } from "@/hooks/useChat";
+import { apiFetch } from "@/lib/api";
 
 export const NotificationProvider = ({ children }: { children: React.ReactNode }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -17,7 +18,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/notifications", { credentials: "include" });
+      const res = await apiFetch("/notifications");
       if (!res.ok) return;
       const data = await res.json();
       setNotifications(Array.isArray(data.data) ? data.data : []);
@@ -57,10 +58,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
   ===================================================== */
   const markAllRead = async () => {
     try {
-      await fetch("/api/notifications/read-all", {
-        method: "PUT",
-        credentials: "include",
-      });
+      await apiFetch("/notifications/read-all", { method: "PUT" });
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     } catch (err) {
       console.error("Mark all read error:", err);
@@ -72,10 +70,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
   ===================================================== */
   const markRead = async (id: string) => {
     try {
-      await fetch(`/api/notifications/read/${id}`, {
-        method: "PUT",
-        credentials: "include",
-      });
+      await apiFetch(`/notifications/read/${id}`, { method: "PUT" });
       setNotifications((prev) =>
         prev.map((n) => (n._id === id ? { ...n, read: true } : n))
       );
@@ -89,10 +84,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
   ===================================================== */
   const removeNotification = async (id: string) => {
     try {
-      await fetch(`/api/notifications/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      await apiFetch(`/notifications/${id}`, { method: "DELETE" });
       setNotifications((prev) => prev.filter((n) => n._id !== id));
     } catch (err) {
       console.error("Remove notification error:", err);

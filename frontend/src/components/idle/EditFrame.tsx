@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { Button } from "../ui/button";
 import PostDialog from "./PostDialog";
 import usePop from "@/hooks/usePop";
+import { apiFetch } from "@/lib/api";
 
 
 const EditFrame = () => {
@@ -44,7 +45,7 @@ const EditFrame = () => {
 
         const fetchPostData = async () => {
             try {
-                const res = await fetch(`/api/syntaxspace/idle-get?id=${id}`, {
+                const res = await apiFetch(`/syntaxspace/idle-get?id=${id}`, {
                     signal: controller.signal,
                 })
 
@@ -84,13 +85,10 @@ const EditFrame = () => {
 
     const handleOnEdit = async () => {
         try {
-            const res = await fetch("/api/syntaxspace/edit-post", {
+            const res = await apiFetch("/syntaxspace/edit-post", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
                 body: JSON.stringify({
-                    code, language, languageId, stdin, stdout, stderr, time: executeTime, title, description: desc,postId:id
+                    code, language, languageId, stdin, stdout, stderr, time: executeTime, title, description: desc, postId: id
                 })
             });
             if (!res.ok) {

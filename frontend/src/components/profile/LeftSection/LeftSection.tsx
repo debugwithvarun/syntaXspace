@@ -4,6 +4,7 @@ import ProfileCard from './ProfileCard'
 import TabSection from './TabSection'
 import { useEffect, useState } from 'react'
 import ImagePath from '@/lib/ImagePath'
+import { apiFetch } from '@/lib/api'
 
 export type MiniUser = {
   username: string
@@ -49,7 +50,7 @@ const LeftSection = ({target_user}:{target_user:string}) => {
         if (!target_user) return
   
         try {
-          const res = await fetch(`/api/get-network-info/${target_user}`)
+          const res = await apiFetch(`/get-network-info/${target_user}`)
           const data = await res.json()
           if (data.success && data.data) {
             setNetworkStats({

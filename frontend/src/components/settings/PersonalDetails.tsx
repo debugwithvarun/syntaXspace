@@ -13,8 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ScrollArea } from "../ui/scroll-area";
 
 import usePop from "@/hooks/usePop";
-
-const API_BASE = "http://localhost:8000";
+import { apiFetch } from "@/lib/api";
 
 const PersonalDetails = () => {
   const [email, setEmail] = useState("");
@@ -30,9 +29,7 @@ const PersonalDetails = () => {
   useEffect(() => {
     const fetchPersonalDetails = async () => {
       try {
-        const res = await fetch(`${API_BASE}/setting/personal`, {
-          credentials: "include",
-        });
+        const res = await apiFetch(`/setting/personal`);
         if (!res.ok) throw new Error("Failed to fetch details");
         const { data } = await res.json();
 
@@ -56,10 +53,8 @@ const PersonalDetails = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/setting/personal`, {
+      const res = await apiFetch(`/setting/personal`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ email, phoneno, website, location, dob, pronouns }),
       });
 

@@ -1,5 +1,6 @@
 
 import { z } from "zod";
+import { apiFetch } from "@/lib/api";
 
 const SignupSchema = z.object({
   name: z.string()
@@ -24,7 +25,7 @@ const SignupSchema = z.object({
   path: ["confirmPassword"],
 }).refine(async(data)=>{
     try {
-        const response = await fetch(`/api/user?username=${data.username}`);
+        const response = await apiFetch(`/user?username=${data.username}`);
         const result:{result:boolean} = await response.json();
         return result.result;
       } catch {
@@ -35,7 +36,7 @@ const SignupSchema = z.object({
     path:["username"],
 }).refine(async(data)=>{
     try {
-        const response=await fetch (`/api/check_email?email=${data.email}`);
+        const response = await apiFetch(`/check_email?email=${data.email}`);
         const result:{result:boolean}= await response.json()
         return result.result;
     } catch {

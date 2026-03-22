@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import usePop from '@/hooks/usePop';
+import { apiFetch } from '@/lib/api';
 
 const Login = () => {
   const { isAuth, setIsAuth, setEmail, setName, setUsername,setProfilePic } = useAuth();
@@ -33,9 +34,8 @@ const Login = () => {
         ...formData,
         usernameOrEmail: formData.usernameOrEmail.toLowerCase(), // normalize email/username
       };
-      const res = await fetch('/api/login', {
+      const res = await apiFetch('/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
@@ -44,12 +44,14 @@ const Login = () => {
         setPopUp("ds")
        
         const data=await res.json()
+        // FIX 1: Store JWT in localStorage for cross-origin auth
+        if (data.token) localStorage.setItem("token", data.token);
         const userInfo=data.userInfo
         console.log(userInfo)
         setUsername(userInfo.username)
         setEmail(userInfo.email)
         setName(userInfo.name)
-        setProfilePic(`http://localhost:8000${userInfo.profilepic}`)
+        setProfilePic(`http://16.171.197.228:8000${userInfo.profilepic}`)
         setIsAuth(true);
       } else {
         const code = await res.json();

@@ -16,6 +16,7 @@ import { Camera } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
 import usePop from "@/hooks/usePop";
+import { apiFetch } from "@/lib/api";
 
 
 
@@ -41,9 +42,7 @@ const EditProfile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch(`api/setting/profile`, {
-          credentials: "include",
-        });
+        const res = await apiFetch(`/setting/profile`);
         if (!res.ok) throw new Error("Failed to fetch profile");
         const { data } = await res.json();
 
@@ -91,12 +90,10 @@ const EditProfile = () => {
         formData.append("profilepic", profileImage);
       }
 
-      const res = await fetch(`api/setting/profile`, {
+      const res = await apiFetch(`/setting/profile`, {
         method: "PUT",
         body: formData,
-        credentials: "include",
       });
-
       const data = await res.json();
       if (res.ok) {
         setProfilePic(data.profile)
@@ -109,8 +106,6 @@ const EditProfile = () => {
       } else {
         setMsg("Profile Update failed")
         setPopUp("dw")
-        // console.error("❌ Update failed:", data);
-        // alert(data.msg || "Profile update failed");
       }
     } catch (error) {
       console.error("Error updating profile:", error);

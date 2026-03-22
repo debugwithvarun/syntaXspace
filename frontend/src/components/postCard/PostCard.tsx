@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth"
 
 import { handleLikeClick } from "@/lib/LikeFunction"
 import { handleCommentClick } from "@/lib/CommentFunction"
+import { apiFetch } from "@/lib/api"
 import CommentSection from "./CommentSection"
 import type { PostSummary } from "../profile/LeftSection/Tabs/PostSection"
 import MenuBarEditDelete from "./Menu"
@@ -40,12 +41,8 @@ const PostCard: React.FC<PostSummary> = ({
   useEffect(() => {
     const fetchComments = async () => {
       try {
-        const res = await fetch(
-          `/api/syntaxspace/get-comments/${_id}?username=${username}`,
-          {
-            method: "GET",
-            credentials: "include",
-          }
+        const res = await apiFetch(
+          `/syntaxspace/get-comments/${_id}?username=${username}`
         )
         const { data } = await res.json()
         setComment(data)
@@ -107,9 +104,8 @@ const PostCard: React.FC<PostSummary> = ({
               projectName={username}
               handleOpenEdit={handleOpenEdit}
               onConfirmDelete={async () => {
-                await fetch(`/api/syntaxspace/delete-post/${_id}`, {
+                await apiFetch(`/syntaxspace/delete-post/${_id}`, {
                   method: "DELETE",
-                  credentials: "include",
                 })
                 setIsDlt(prev => !prev)
               }}

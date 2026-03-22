@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useEffect } from "react";
+import { apiFetch } from "@/lib/api";
 
 const Logout = () => {
   const navigate = useNavigate();
@@ -11,14 +12,13 @@ const Logout = () => {
 
     async function doLogOut() {
       try {
-        const res = await fetch("/api/logout", {
-          method: "POST",
-          credentials: "include",
-        });
+        const res = await apiFetch("/logout", { method: "POST" });
 
         if (!isMounted) return;
 
         if (res.ok) {
+          // FIX 1: Remove JWT token from localStorage on logout
+          localStorage.removeItem("token");
           setTimeout(() => {
             if (isMounted) {
               setIsAuth(false);

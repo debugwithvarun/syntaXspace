@@ -5,8 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "../ui/button";
 import usePop from "@/hooks/usePop";
-
-const API_BASE = "http://localhost:8000";
+import { apiFetch } from "@/lib/api";
 
 const PasswordSecurity = () => {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -32,10 +31,8 @@ const PasswordSecurity = () => {
 
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/setting/security`, {
+      const res = await apiFetch(`/setting/security`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
       });
 

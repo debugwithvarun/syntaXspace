@@ -11,7 +11,7 @@ import useChat from "@/hooks/useChat";
 import { type User } from "@/context/chat/ChatContext";
 import ImagePath from "@/lib/ImagePath";
 
-const BACKEND_URL = "http://16.171.197.228:8000";
+import { apiFetch } from "@/lib/api";
 
 export const ChatSidebar = () => {
   const { profilepic, name, _id: myId } = useAuth();
@@ -41,9 +41,8 @@ export const ChatSidebar = () => {
     setSearching(true);
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `${BACKEND_URL}/chat/users?search=${encodeURIComponent(searchTerm)}`,
-          { credentials: "include" }
+        const res = await apiFetch(
+          `/chat/users?search=${encodeURIComponent(searchTerm)}`
         );
         if (!res.ok) { setSearching(false); return; }
         const data: User[] = await res.json();

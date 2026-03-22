@@ -1,7 +1,10 @@
-const ImagePath = (path: string) => {
+import { BACKEND } from "./api";
 
-    // return `http://localhost:8000${path}`
-    return `http://16.171.197.228:8000${path}`
+const ImagePath = (path: string) => {
+    if (!path) return "";
+    // If path is already a full URL, return as-is
+    if (path.startsWith("http")) return path;
+    return `${BACKEND}${path}`;
 }
 
 export default ImagePath

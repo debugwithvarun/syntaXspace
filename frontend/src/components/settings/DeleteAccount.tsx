@@ -5,8 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "../ui/button";
 import usePop from "@/hooks/usePop";
-
-const API_BASE = "http://localhost:8000";
+import { apiFetch } from "@/lib/api";
 
 const DeleteAccount = () => {
   const [password, setPassword] = useState("");
@@ -25,10 +24,8 @@ const DeleteAccount = () => {
 
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/setting/delete`, {
+      const res = await apiFetch(`/setting/delete`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ password }),
       });
 

@@ -4,6 +4,7 @@ import { Card } from '../ui/card'
 import { useIdle } from "@/hooks/useIdle";
 import { CodeBox } from "./CodeBox";
 import { useEffect } from "react";
+import { apiFetch } from "@/lib/api";
 
 
 const ViewFrame = () => {
@@ -27,7 +28,7 @@ const ViewFrame = () => {
 
     const fetchPostData = async () => {
       try {
-        const res = await fetch(`/api/syntaxspace/idle-get?id=${id}`, {
+        const res = await apiFetch(`/syntaxspace/idle-get?id=${id}`, {
           signal: controller.signal,
         })
 

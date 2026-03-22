@@ -9,11 +9,7 @@ import ChatContext, {
   type MessageStatus,
 } from "./ChatContext";
 import { useAuth } from "@/hooks/useAuth";
-
-// `const ENDPOINT = "http://localhost:8000";
-// const BACKEND = "http://localhost:8000";`
-const ENDPOINT = "http://16.171.197.228:8000";
-const BACKEND = "http://16.171.197.228:8000";
+import { BACKEND, apiFetch } from "@/lib/api";
 
 const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const { _id: currentUserId } = useAuth();
@@ -58,8 +54,8 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!currentUserId) return;
 
-    const newSocket = io(ENDPOINT, {
-      withCredentials: true,
+    const newSocket = io(BACKEND, {
+      auth: { token: localStorage.getItem("token") },
       transports: ["websocket"],
     });
 
@@ -85,7 +81,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchBlockedUsers = useCallback(async () => {
     if (!currentUserId) return;
     try {
-      const res = await fetch(`${BACKEND}/blocked-users`, { credentials: "include" });
+      const res = await apiFetch(`/blocked-users`);
       if (!res.ok) return;
       const data = await res.json();
       const ids = (data.data || []).map((u: User) => u._id);
@@ -106,7 +102,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const blockUser = async (userId: string) => {
     try {
-      await fetch(`${BACKEND}/block/${userId}`, { method: "PUT", credentials: "include" });
+      await apiFetch(`/block/${userId}`, { method: "PUT" });
       setBlockedUsers((prev) => [...prev, userId]);
     } catch (err) {
       console.error("Block error:", err);
@@ -115,7 +111,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const unblockUser = async (userId: string) => {
     try {
-      await fetch(`${BACKEND}/unblock/${userId}`, { method: "PUT", credentials: "include" });
+      await apiFetch(`/unblock/${userId}`, { method: "PUT" });
       setBlockedUsers((prev) => prev.filter((id) => id !== userId));
     } catch (err) {
       console.error("Unblock error:", err);
@@ -126,7 +122,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchChats = useCallback(async () => {
     if (!currentUserId) return;
     try {
-      const res = await fetch(`${BACKEND}/chat/fetch-chats`, { credentials: "include" });
+      const res = await apiFetch(`/chat/fetch-chats`);
       if (!res.ok) return;
       const data = await res.json();
       setChats(Array.isArray(data) ? data : []);
@@ -307,10 +303,8 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const accessChat = async (userId: string) => {
     try {
       setLoadingChat(true);
-      const res = await fetch(`${BACKEND}/chat/access`, {
+      const res = await apiFetch(`/chat/access`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ userId }),
       });
       if (!res.ok) return;
@@ -331,9 +325,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
     const loadMessages = async () => {
       try {
-        const res = await fetch(`${BACKEND}/chat/messages/${selectedChat._id}`, {
-          credentials: "include",
-        });
+        const res = await apiFetch(`/chat/messages/${selectedChat._id}`);
         if (!res.ok) return;
         const data = await res.json();
         setMessages(Array.isArray(data) ? data : []);
@@ -389,7 +381,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   /* ─── DELETE CHAT ─── */
   const deleteChat = async (chatId: string) => {
     try {
-      await fetch(`${BACKEND}/chat/delete/${chatId}`, { method: "DELETE", credentials: "include" });
+      await apiFetch(`/chat/delete/${chatId}`, { method: "DELETE" });
       socket?.emit("delete chat", { chatId });
     } catch (err) {
       console.error("Delete chat error:", err);

@@ -29,6 +29,7 @@ import ImagePath from "@/lib/ImagePath"
 import type { MiniUser, NetworkStats } from "./LeftSection"
 import { useAuth } from "@/hooks/useAuth"
 import useChat from "@/hooks/useChat"
+import { apiFetch } from "@/lib/api"
 
 const formatCount = (value: number) => {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
@@ -168,7 +169,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
   // Fetch targetId for block actions
   useEffect(() => {
     if (!targetUsername || isOwnProfile) return;
-    fetch(`/api/get-about-info/${targetUsername}`, { credentials: "include" })
+    apiFetch(`/get-about-info/${targetUsername}`)
       .then((r) => r.json())
       .then((d) => {
         if (d?.data?._id) setTargetId(d.data._id);
@@ -199,10 +200,7 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
     }
 
     try {
-      const res = await fetch(`/api/check-status/${targetUsername}`, {
-        method: "GET",
-        credentials: "include",
-      })
+      const res = await apiFetch(`/check-status/${targetUsername}`)
       if (!res.ok) throw new Error("Failed to fetch status")
       const data = await res.json()
       if (data?.status === "already" || data?.status === "sent" || data?.status === "idle") {
@@ -229,18 +227,15 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
     setActionLoading(true)
     try {
       if (inviteStatus === "idle") {
-        const res = await fetch(`/api/sent-request`, {
+        const res = await apiFetch(`/sent-request`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
           body: JSON.stringify({ target: targetUsername }),
         })
         if (!res.ok) throw new Error("Failed to send request")
         setInviteStatus("sent")
       } else if (inviteStatus === "sent") {
-        const res = await fetch(`/api/delete-sent-request/${targetUsername}`, {
+        const res = await apiFetch(`/delete-sent-request/${targetUsername}`, {
           method: "DELETE",
-          credentials: "include",
         })
         if (!res.ok) throw new Error("Failed to cancel request")
         setInviteStatus("idle")
@@ -258,9 +253,8 @@ const ProfileCardComponent: React.FC<ProfileCardProps> = ({
 
     setActionLoading(true)
     try {
-      const res = await fetch(`/api/remove-following/${targetUsername}`, {
+      const res = await apiFetch(`/remove-following/${targetUsername}`, {
         method: "DELETE",
-        credentials: "include",
       })
       if (!res.ok) throw new Error("Failed to unfollow")
       setInviteStatus("idle")

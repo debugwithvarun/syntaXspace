@@ -1,6 +1,7 @@
   import { useEffect, useState } from "react";
   import AuthContext from "../Auth/AuthContext";
   import ImagePath from "@/lib/ImagePath";
+  import { apiFetch } from "@/lib/api";
 
   export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const [isAuth, setIsAuth] = useState(false);
@@ -17,7 +18,7 @@
       useEffect(() => {
         const checkAuth = async () => {
           try {
-            const res = await fetch("/api/check-auth");
+            const res = await apiFetch("/check-auth");
             if (res.ok) {
               const data = await res.json();
               const userInfo=data.userInfo

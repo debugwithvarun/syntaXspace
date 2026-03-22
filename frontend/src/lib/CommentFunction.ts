@@ -1,4 +1,5 @@
 import React from "react";
+import { apiFetch } from "./api";
 
 export interface Reply {
   _id: string;
@@ -67,17 +68,13 @@ export const handleSubmitComment = async ({
   if (!newComment.trim()) return;
 
   try {
-    const res = await fetch(`/api/syntaxspace/add-comment`, {
+    const res = await apiFetch(`/syntaxspace/add-comment`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify({
         username,
         text: newComment.trim(),
         postId,
       }),
-      credentials: "include",
     });
 
     if (!res.ok) {
@@ -132,18 +129,14 @@ export const handleSubmitReply = async ({
   if (!replyText.trim()) return;
 
   try {
-    const res = await fetch(`/api/syntaxspace/add-reply`, {
+    const res = await apiFetch(`/syntaxspace/add-reply`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify({
         username,
         text: replyText.trim(),
         postId,
         commentId,
       }),
-      credentials: "include",
     });
 
     if (!res.ok) {
@@ -193,16 +186,12 @@ export const handleCommentLike = async ({
   setLocalComments: React.Dispatch<React.SetStateAction<Comment[]>>;
 }) => {
   try {
-    const res = await fetch(`/api/syntaxspace/comment-like`, {
+    const res = await apiFetch(`/syntaxspace/comment-like`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify({
         postId,
         commentId,
       }),
-      credentials: "include",
     });
 
     if (!res.ok) {
@@ -242,17 +231,13 @@ export const handleReplyLike = async ({
   setLocalComments: React.Dispatch<React.SetStateAction<Comment[]>>;
 }) => {
   try {
-    const res = await fetch(`/api/syntaxspace/reply-like`, {
+    const res = await apiFetch(`/syntaxspace/reply-like`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify({
         postId,
         commentId,
         replyId,
       }),
-      credentials: "include",
     });
 
     if (!res.ok) {
@@ -316,11 +301,9 @@ export const handleDeleteComment = async ({
   setIsCmnt:React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   try {
-    const res = await fetch(`/api/syntaxspace/delete-comment`, {
+    const res = await apiFetch(`/syntaxspace/delete-comment`, {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ postId, commentId }),
-      credentials: "include",
     });
 
     if (!res.ok) {
@@ -350,11 +333,9 @@ export const handleDeleteReply = async ({
   setLocalComments: React.Dispatch<React.SetStateAction<Comment[]>>;
 }) => {
   try {
-    const res = await fetch(`/api/syntaxspace/delete-reply`, {
+    const res = await apiFetch(`/syntaxspace/delete-reply`, {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ postId, commentId, replyId }),
-      credentials: "include",
     });
 
     if (!res.ok) {

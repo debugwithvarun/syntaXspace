@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react"
-
 import PostCard from "@/components/postCard/PostCard"
+import { apiFetch } from "@/lib/api"
 
 
 export type PostSummary = {
@@ -47,7 +47,7 @@ useEffect(() => {
     setError(null)
 
     try {
-      const res = await fetch(`/api/syntaxspace/get-post/${username}`, {
+      const res = await apiFetch(`/syntaxspace/get-post/${username}`, {
         signal: controller.signal,
       })
 

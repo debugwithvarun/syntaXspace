@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import useChat from "@/hooks/useChat";
 import { ShieldBan, ShieldCheck, UserX } from "lucide-react";
 import { Link } from "react-router-dom";
+import { apiFetch } from "@/lib/api";
 
 type BlockedUser = {
   _id: string;
@@ -22,7 +23,7 @@ export default function Block() {
   const fetchBlocked = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/blocked-users", { credentials: "include" });
+      const res = await apiFetch("/blocked-users");
       if (!res.ok) return;
       const data = await res.json();
       setUsers(Array.isArray(data.data) ? data.data : []);

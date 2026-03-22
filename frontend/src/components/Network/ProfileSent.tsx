@@ -23,6 +23,7 @@ import usePop from "@/hooks/usePop"
 import ProfileShimmer from "../Skelton/ProfileShimmer"
 import ImagePath from "@/lib/ImagePath"
 import { Link } from "react-router-dom"
+import { apiFetch } from "@/lib/api"
 
 // const people = [
 //     {
@@ -82,7 +83,7 @@ export function ProfileSent() {
             setLoading(true);
             try {
 
-                const res = await fetch(`/api/get-sent-requests`);
+                const res = await apiFetch(`/get-sent-requests`);
 
                 if (res.ok) {
                     const { data } = await res.json();
@@ -111,11 +112,8 @@ export function ProfileSent() {
 
     const RemoveSentRequest = async (username: string) => {
         try {
-            const res = await fetch(`/api/delete-sent-request/${encodeURIComponent(username)}`, {
+            const res = await apiFetch(`/delete-sent-request/${encodeURIComponent(username)}`, {
                 method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                }
             })
             if (res.ok) {
 

@@ -5,6 +5,7 @@ import usePop from "@/hooks/usePop";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ImagePath from "@/lib/ImagePath";
 import { Link } from "react-router-dom";
+import { apiFetch } from "@/lib/api";
 
 export default function PeopleYouMayKnow({
   rcmd,
@@ -18,7 +19,7 @@ export default function PeopleYouMayKnow({
   
   useEffect(() => {
     const getStatus = async (target: string) => {
-      const res = await fetch(`/api/check-status/${target}`)
+      const res = await apiFetch(`/check-status/${target}`)
       const res_json = await res.json()
       // console.log("user : ",target," status : ",res_json.status)
 
@@ -32,9 +33,8 @@ export default function PeopleYouMayKnow({
     try {
 
       setStatus("loading")
-      const res = await fetch("/api/sent-request", {
+      const res = await apiFetch("/sent-request", {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
 

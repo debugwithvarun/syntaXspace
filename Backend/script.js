@@ -30,9 +30,10 @@ const app = express();
 
 app.use(
   cors({
-   //  origin: process.env.CLIENT_URL,
-    origin: true,
+    // FIX 7: Use exact S3 origin from env (required for credentials + Authorization header)
+    origin: process.env.CLIENT_URL,
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 

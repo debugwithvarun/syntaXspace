@@ -21,6 +21,7 @@ import ProfileShimmer from "../Skelton/ProfileShimmer";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import ImagePath from "@/lib/ImagePath";
 import { Link } from "react-router-dom";
+import { apiFetch } from "@/lib/api";
 
 const Followers = () => {
   const [people, setPeople] = React.useState<{ username: string; name: string;profilepic:string, _id: string }[]>([]);
@@ -34,7 +35,7 @@ const Followers = () => {
     const GetRequest = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/get-follower-info`);
+        const res = await apiFetch(`/get-follower-info`);
         if (res.ok) {
           const { data } = await res.json();
           setPeople(data);
@@ -59,11 +60,8 @@ const Followers = () => {
 
   const RemoveFollower = async (username: string) => {
     try {
-      const res = await fetch(`/api/remove-follower/${encodeURIComponent(username)}`, {
+      const res = await apiFetch(`/remove-follower/${encodeURIComponent(username)}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        }
       })
       if (res.ok) {
         setRemove([...remove, username])

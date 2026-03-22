@@ -1,7 +1,12 @@
 import jwt from "jsonwebtoken";
 
 const verifyToken = (req, res, next) => {
-  const token = req.cookies.token;
+  // FIX 6: Check cookie first, then Authorization: Bearer <token> header
+  const token =
+    req.cookies?.token ||
+    (req.headers.authorization?.startsWith("Bearer ")
+      ? req.headers.authorization.split(" ")[1]
+      : null);
 
   if (!token) {
     return res.status(401).json({ message: "No token" });
@@ -21,4 +26,4 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-export default verifyToken;
+export default verifyToken;
