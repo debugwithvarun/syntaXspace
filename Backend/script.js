@@ -29,12 +29,12 @@ const app = express();
 ============================ */
 
 app.use(
-  cors({
-    // FIX 7: Use exact S3 origin from env (required for credentials + Authorization header)
-    origin: process.env.CLIENT_URL,
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
+   cors({
+      // FIX 7: Use exact S3 origin from env (required for credentials + Authorization header)
+      origin: true,
+      credentials: true,
+      allowedHeaders: ["Content-Type", "Authorization"],
+   })
 );
 
 app.use(express.json());
@@ -48,8 +48,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.use(
-  "/profilepic",
-  express.static(path.join(__dirname, "Public/profilepic"))
+   "/profilepic",
+   express.static(path.join(__dirname, "Public/profilepic"))
 );
 
 /* ============================
@@ -86,7 +86,7 @@ setupSocket(server, app);
 const PORT = process.env.PORT || 8000;
 
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+   console.log(`🚀 Server running on port ${PORT}`);
 });
 
 /* ============================
