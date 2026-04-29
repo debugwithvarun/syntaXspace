@@ -24,3 +24,4 @@
   },
   "include": ["vite.config.ts"]
 }
+// http://16.171.197.228:8000/notifications
