@@ -117,6 +117,21 @@ const PostCard: React.FC<PostSummary> = ({
 
 
         <div className="space-y-4">
+          {/* Badge row */}
+          <div className="flex items-center gap-2">
+            {isError ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-semibold text-white">
+                <svg width="9" height="9" viewBox="0 0 24 24"><path fill="currentColor" d="M11.001 2h2v12h-2zM11 18h2v2h-2z"/></svg>
+                Error
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-600 px-2.5 py-0.5 text-xs font-semibold text-white">
+                <svg width="9" height="9" viewBox="0 0 24 24"><path fill="currentColor" d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
+                Working
+              </span>
+            )}
+          </div>
+
           <h3 className="text-base font-semibold tracking-tight text-primary sm:text-lg line-clamp-2">
             {title}
           </h3>

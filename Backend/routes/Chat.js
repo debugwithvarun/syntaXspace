@@ -114,9 +114,9 @@ chatRouter.get("/fetch-chats", async (req, res) => {
     const chats = await Conversation.find({
       participants: currentUserId,
       isDeleted: false,
-      latestMessage: { $exists: true, $ne: null },
     })
       .populate("participants", "-password")
+      .populate("groupAdmin", "-password")
       .populate({
         path: "latestMessage",
         populate: { path: "sender", select: "name profilepic email" },
@@ -235,4 +235,137 @@ chatRouter.delete("/message/:messageId", async (req, res) => {
   }
 });
 
-export default chatRouter;
+/* =========================================================
+   7️⃣ CREATE GROUP CHAT
+========================================================= */
+chatRouter.post("/group", async (req, res) => {
+  try {
+    const { name, members } = req.body;
+    const currentUserId = req.user._id;
+
+    if (!name || !members || !Array.isArray(members) || members.length < 2) {
+      return res.status(400).json({ message: "Group name and at least 2 members required" });
+    }
+
+    // Validate all member IDs
+    const validMembers = members.filter((id) => mongoose.Types.ObjectId.isValid(id));
+    if (validMembers.length < 2) {
+      return res.status(400).json({ message: "At least 2 valid member IDs required" });
+    }
+
+    // Include creator in participants
+    const participants = [...new Set([currentUserId.toString(), ...validMembers])];
+
+    const unreadCounts = {};
+    participants.forEach((id) => { unreadCounts[id] = 0; });
+
+    const group = await Conversation.create({
+      chatName: name,
+      isGroupChat: true,
+      participants,
+      groupAdmin: currentUserId,
+      unreadCounts,
+    });
+
+    const fullGroup = await Conversation.findById(group._id)
+      .populate("participants", "-password")
+      .populate("groupAdmin", "-password");
+
+    res.status(201).json(fullGroup);
+  } catch (error) {
+    console.error("Create group error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* =========================================================
+   8️⃣ RENAME GROUP
+========================================================= */
+chatRouter.put("/group/rename", async (req, res) => {
+  try {
+    const { chatId, chatName } = req.body;
+    const currentUserId = req.user._id;
+
+    const updated = await Conversation.findOneAndUpdate(
+      { _id: chatId, groupAdmin: currentUserId },
+      { chatName },
+      { new: true }
+    )
+      .populate("participants", "-password")
+      .populate("groupAdmin", "-password");
+
+    if (!updated) return res.status(403).json({ message: "Only admin can rename group" });
+    res.json(updated);
+  } catch (error) {
+    console.error("Rename group error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* =========================================================
+   9️⃣ ADD MEMBER TO GROUP
+========================================================= */
+chatRouter.put("/group/add-member", async (req, res) => {
+  try {
+    const { chatId, userId } = req.body;
+    const currentUserId = req.user._id;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid userId" });
+    }
+
+    const updated = await Conversation.findOneAndUpdate(
+      { _id: chatId, isGroupChat: true, groupAdmin: currentUserId },
+      { $addToSet: { participants: userId } },
+      { new: true }
+    )
+      .populate("participants", "-password")
+      .populate("groupAdmin", "-password");
+
+    if (!updated) return res.status(403).json({ message: "Only admin can add members" });
+    res.json(updated);
+  } catch (error) {
+    console.error("Add member error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* =========================================================
+   🔟 REMOVE MEMBER FROM GROUP
+========================================================= */
+chatRouter.put("/group/remove-member", async (req, res) => {
+  try {
+    const { chatId, userId } = req.body;
+    const currentUserId = req.user._id;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid userId" });
+    }
+
+    // Admin can remove anyone; users can remove themselves (leave group)
+    const chat = await Conversation.findOne({ _id: chatId, isGroupChat: true });
+    if (!chat) return res.status(404).json({ message: "Group not found" });
+
+    const isAdmin = chat.groupAdmin?.toString() === currentUserId.toString();
+    const isSelf = userId.toString() === currentUserId.toString();
+
+    if (!isAdmin && !isSelf) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const updated = await Conversation.findByIdAndUpdate(
+      chatId,
+      { $pull: { participants: userId } },
+      { new: true }
+    )
+      .populate("participants", "-password")
+      .populate("groupAdmin", "-password");
+
+    res.json(updated);
+  } catch (error) {
+    console.error("Remove member error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+export default chatRouter;

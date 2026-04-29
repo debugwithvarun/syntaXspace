@@ -109,17 +109,24 @@ const PostCard: React.FC<PostSummary> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {isError ? (
-              <div className="inline-flex items-center gap-2 rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white shadow">
-                <svg width="12" height="12" viewBox="0 0 24 24" className="inline-block">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-semibold text-white shadow">
+                <svg width="10" height="10" viewBox="0 0 24 24" className="inline-block shrink-0">
                   <path fill="currentColor" d="M11.001 2h2v12h-2zM11 18h2v2h-2z" />
                 </svg>
                 Error
               </div>
             ) : likeCount >= 50 ? (
-              <div className="inline-flex items-center gap-2 rounded-full bg-yellow-400/95 px-2 py-0.5 text-xs font-semibold text-black shadow">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-yellow-400/95 px-2.5 py-0.5 text-xs font-semibold text-black shadow">
                 ★ Popular
               </div>
-            ) : null}
+            ) : (
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-2.5 py-0.5 text-xs font-semibold text-white shadow">
+                <svg width="10" height="10" viewBox="0 0 24 24" className="inline-block shrink-0">
+                  <path fill="currentColor" d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/>
+                </svg>
+                Working
+              </div>
+            )}
 
            <div className="hidden sm:flex items-center gap-2">
               <span className="text-[11px] font-medium rounded-full px-2.5 py-0.5 bg-muted/60 text-muted-foreground border">

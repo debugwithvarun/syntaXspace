@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { cn } from "@/lib/utils";
+import { Users } from "lucide-react";
 
 interface ContactItemProps {
   name: string;
@@ -15,6 +16,7 @@ interface ContactItemProps {
   isDeletedMessage?: boolean;
   prefix?: string; // e.g. "You:"
   onRightAction?: () => void; // optional menu action
+  isGroup?: boolean; // group chat indicator
 }
 
 export const ContactItem = ({
@@ -29,6 +31,7 @@ export const ContactItem = ({
   isDeletedMessage,
   prefix,
   onRightAction,
+  isGroup,
 }: ContactItemProps) => {
   const initials =
     name
@@ -51,14 +54,22 @@ export const ContactItem = ({
       {/* Avatar */}
       <div className="relative mt-0.5">
         <Avatar className="h-11 w-11 border border-background shadow-sm">
-          <AvatarImage src={avatar || ""} alt={name} />
-          <AvatarFallback className="bg-muted text-muted-foreground font-medium">
-            {initials}
-          </AvatarFallback>
+          {isGroup ? (
+            <AvatarFallback className="bg-primary/10 text-primary">
+              <Users className="h-5 w-5" />
+            </AvatarFallback>
+          ) : (
+            <>
+              <AvatarImage src={avatar || ""} alt={name} />
+              <AvatarFallback className="bg-muted text-muted-foreground font-medium">
+                {initials}
+              </AvatarFallback>
+            </>
+          )}
         </Avatar>
 
-        {/* Online Indicator */}
-        {isOnline && (
+        {/* Online Indicator — only for 1:1 chats */}
+        {!isGroup && isOnline && (
           <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-background rounded-full" />
         )}
       </div>
@@ -66,14 +77,21 @@ export const ContactItem = ({
       {/* Content */}
       <div className="flex-1 overflow-hidden">
         <div className="flex justify-between items-center mb-0.5">
-          <span
-            className={cn(
-              "font-medium text-sm truncate",
-              isActive ? "text-primary" : "text-foreground"
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span
+              className={cn(
+                "font-medium text-sm truncate",
+                isActive ? "text-primary" : "text-foreground"
+              )}
+            >
+              {name}
+            </span>
+            {isGroup && (
+              <span className="shrink-0 text-[9px] font-semibold bg-primary/10 text-primary rounded-full px-1.5 py-0.5 leading-none">
+                GROUP
+              </span>
             )}
-          >
-            {name}
-          </span>
+          </div>
 
           <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
             {time}

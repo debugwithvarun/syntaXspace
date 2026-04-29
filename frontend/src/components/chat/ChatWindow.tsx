@@ -3,12 +3,14 @@ import {
   Check,
   CheckCheck,
   Info,
+  LogOut,
   MoreVertical,
   Phone,
   Send,
   ShieldCheck,
   Smile,
   Trash2,
+  Users,
   Video,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -97,6 +99,7 @@ export const ChatWindow = () => {
     startTyping,
     stopTyping,
     getMessageStatus,
+    leaveGroup,
   } = useChat();
 
   const { _id: myId } = useAuth();
@@ -111,17 +114,34 @@ export const ChatWindow = () => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
-  const otherUser: User | null = useMemo(() => {
-    if (!selectedChat?.participants?.length) return null;
-    return selectedChat.participants.find((p) => p._id !== myId) || selectedChat.participants[0];
-  }, [selectedChat, myId]);
+  const isGroup = selectedChat?.isGroupChat ?? false;
 
-  const blocked = useMemo(() => otherUser ? isBlocked(otherUser._id) : false, [isBlocked, otherUser]);
-  const isOtherOnline = useMemo(() => otherUser ? onlineUsers.has(otherUser._id) : false, [onlineUsers, otherUser]);
+  const otherUser: User | null = useMemo(() => {
+    if (isGroup || !selectedChat?.participants?.length) return null;
+    return selectedChat.participants.find((p) => p._id !== myId) || selectedChat.participants[0];
+  }, [selectedChat, myId, isGroup]);
+
+  const blocked = useMemo(() => (!isGroup && otherUser) ? isBlocked(otherUser._id) : false, [isBlocked, otherUser, isGroup]);
+  const isOtherOnline = useMemo(() => (!isGroup && otherUser) ? onlineUsers.has(otherUser._id) : false, [onlineUsers, otherUser, isGroup]);
   const isOtherTyping = useMemo(
     () => selectedChat ? !!typingUsers[selectedChat._id] : false,
     [typingUsers, selectedChat]
   );
+
+  // Group members count (excluding self)
+  const groupMembersCount = isGroup ? (selectedChat?.participants?.length ?? 0) : 0;
+  const groupOnlineCount = isGroup
+    ? (selectedChat?.participants?.filter((p) => p._id !== myId && onlineUsers.has(p._id)).length ?? 0)
+    : 0;
+
+  const displayName = isGroup
+    ? (selectedChat?.chatName || "Group Chat")
+    : (otherUser?.name ?? "");
+
+  const displayPic = isGroup ? "" : (otherUser?.profilepic ?? "");
+  const displayInitial = isGroup
+    ? null
+    : (otherUser?.name?.[0]?.toUpperCase() ?? "?");
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputText(e.target.value);
@@ -151,7 +171,7 @@ export const ChatWindow = () => {
   };
 
   const handleVideoCall = () => {
-    if (!otherUser || callState !== "idle") return;
+    if (!otherUser || callState !== "idle" || isGroup) return;
     initiateCall(otherUser._id, {
       name: otherUser.name,
       username: otherUser.username,
@@ -166,7 +186,7 @@ export const ChatWindow = () => {
   };
 
   /* ─── EMPTY STATE ───────────────────────────────── */
-  if (!selectedChat || !otherUser) {
+  if (!selectedChat || (!isGroup && !otherUser)) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center h-full gap-4 select-none">
         <div className="h-20 w-20 bg-primary/10 rounded-full flex items-center justify-center">
@@ -187,20 +207,33 @@ export const ChatWindow = () => {
       <div className="flex items-center justify-between px-4 py-2.5 border-b shrink-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Avatar className="h-10 w-10 border-2 border-primary/10 shadow">
-              <AvatarImage src={ImagePath(otherUser.profilepic || "")} alt={otherUser.name} />
-              <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
-                {otherUser.name?.[0]?.toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            {isOtherOnline && (
-              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 rounded-full border-2 border-background" />
+            {isGroup ? (
+              <div className="h-10 w-10 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center shadow">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
+            ) : (
+              <>
+                <Avatar className="h-10 w-10 border-2 border-primary/10 shadow">
+                  <AvatarImage src={ImagePath(displayPic)} alt={displayName} />
+                  <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+                    {displayInitial}
+                  </AvatarFallback>
+                </Avatar>
+                {isOtherOnline && (
+                  <span className="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 rounded-full border-2 border-background" />
+                )}
+              </>
             )}
           </div>
 
           <div>
-            <p className="font-semibold text-sm leading-tight">{otherUser.name}</p>
-            {isOtherTyping ? (
+            <p className="font-semibold text-sm leading-tight">{displayName}</p>
+            {isGroup ? (
+              <p className="text-[11px] text-muted-foreground">
+                {groupMembersCount} members
+                {groupOnlineCount > 0 && <span className="text-green-500 ml-1">· {groupOnlineCount} online</span>}
+              </p>
+            ) : isOtherTyping ? (
               <p className="text-[11px] text-primary font-medium flex items-center gap-1">
                 <span className="inline-flex gap-0.5">
                   <span className="h-1 w-1 rounded-full bg-primary animate-bounce [animation-delay:0ms]" />
@@ -218,75 +251,117 @@ export const ChatWindow = () => {
         </div>
 
         <div className="flex items-center gap-1">
-          {/* Audio call */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary"
-            onClick={() => {
-              if (!otherUser || callState !== "idle") return;
-              initiateCall(
-                otherUser._id,
-                { name: otherUser.name, username: otherUser.username, profilepic: otherUser.profilepic },
-                "audio"
-              );
-            }}
-            disabled={callState !== "idle" || blocked}
-            title="Start voice call"
-          >
-            <Phone className="h-4 w-4" />
-          </Button>
+          {/* Audio call — only for 1:1 */}
+          {!isGroup && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full text-muted-foreground hover:text-primary"
+              onClick={() => {
+                if (!otherUser || callState !== "idle") return;
+                initiateCall(
+                  otherUser._id,
+                  { name: otherUser.name, username: otherUser.username, profilepic: otherUser.profilepic },
+                  "audio"
+                );
+              }}
+              disabled={callState !== "idle" || blocked}
+              title="Start voice call"
+            >
+              <Phone className="h-4 w-4" />
+            </Button>
+          )}
 
-          {/* Video call */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn("h-8 w-8 rounded-full", callState !== "idle" ? "text-destructive" : "text-muted-foreground hover:text-primary")}
-            onClick={handleVideoCall}
-            disabled={callState !== "idle" || blocked}
-            title="Start video call"
-          >
-            <Video className="h-4 w-4" />
-          </Button>
+          {/* Video call — only for 1:1 */}
+          {!isGroup && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn("h-8 w-8 rounded-full", callState !== "idle" ? "text-destructive" : "text-muted-foreground hover:text-primary")}
+              onClick={handleVideoCall}
+              disabled={callState !== "idle" || blocked}
+              title="Start video call"
+            >
+              <Video className="h-4 w-4" />
+            </Button>
+          )}
 
           <Separator orientation="vertical" className="h-5 mx-0.5" />
 
-          {/* Options */}
+          {/* Options dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44 z-50">
-              <DropdownMenuItem>
-                <Info className="h-4 w-4 mr-2" /> View profile
-              </DropdownMenuItem>
+            <DropdownMenuContent align="end" className="w-48 z-50">
+              {!isGroup && (
+                <DropdownMenuItem>
+                  <Info className="h-4 w-4 mr-2" /> View profile
+                </DropdownMenuItem>
+              )}
+              {isGroup && (
+                <DropdownMenuItem className="text-muted-foreground cursor-default" disabled>
+                  <Users className="h-4 w-4 mr-2" />
+                  {groupMembersCount} members
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
 
-              {/* Block/Unblock */}
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <DropdownMenuItem
-                    onSelect={(e) => e.preventDefault()}
-                    className={blocked ? "text-green-600" : "text-destructive focus:text-destructive"}
-                  >
-                    {blocked ? <><ShieldCheck className="h-4 w-4 mr-2" />Unblock</> : <><Ban className="h-4 w-4 mr-2" />Block</>}
-                  </DropdownMenuItem>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{blocked ? "Unblock" : "Block"} @{otherUser.username}?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {blocked ? "They'll be able to send you messages again." : "They won't be able to send you messages while blocked."}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleToggleBlock}>Yes, {blocked ? "unblock" : "block"}</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              {/* Block/Unblock — only for 1:1 */}
+              {!isGroup && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem
+                      onSelect={(e) => e.preventDefault()}
+                      className={blocked ? "text-green-600" : "text-destructive focus:text-destructive"}
+                    >
+                      {blocked ? <><ShieldCheck className="h-4 w-4 mr-2" />Unblock</> : <><Ban className="h-4 w-4 mr-2" />Block</>}
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{blocked ? "Unblock" : "Block"} @{otherUser?.username}?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {blocked ? "They'll be able to send you messages again." : "They won't be able to send you messages while blocked."}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleToggleBlock}>Yes, {blocked ? "unblock" : "block"}</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+
+              {/* Leave Group — only for group chats */}
+              {isGroup && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem
+                      onSelect={(e) => e.preventDefault()}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" /> Leave group
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Leave "{selectedChat.chatName}"?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        You will no longer receive messages from this group.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => leaveGroup(selectedChat._id)} className="bg-destructive hover:bg-destructive/90">
+                        Yes, leave
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
 
               <DropdownMenuSeparator />
 
@@ -314,7 +389,7 @@ export const ChatWindow = () => {
       </div>
 
       {/* ═══════════════ BLOCKED BANNER ═══════════════ */}
-      {blocked && (
+      {!isGroup && blocked && (
         <div className="px-3 py-2 text-xs text-center bg-destructive/5 text-destructive border-b flex items-center justify-center gap-1.5">
           <Ban className="h-3 w-3" />
           You have blocked this user. Unblock to message them.
@@ -349,7 +424,7 @@ export const ChatWindow = () => {
                 const isMe = senderId === myId;
                 const status = getMessageStatus(msg);
 
-                // Show avatar only when sender changes
+                // Show avatar when sender changes
                 const prevMsg = group.messages[idx - 1];
                 const prevSenderId = prevMsg
                   ? typeof prevMsg.sender === "string"
@@ -357,6 +432,8 @@ export const ChatWindow = () => {
                     : (prevMsg.sender as User)?._id
                   : null;
                 const showAvatar = !isMe && prevSenderId !== senderId;
+                // Show sender name in group chats for received messages
+                const showSenderName = isGroup && !isMe && showAvatar;
 
                 return (
                   <div
@@ -367,7 +444,7 @@ export const ChatWindow = () => {
                       showAvatar ? "mt-2" : "mt-0.5"
                     )}
                   >
-                    {/* Avatar — only for received, and only when sender changes */}
+                    {/* Avatar — only for received messages, when sender changes */}
                     <div className="w-7 shrink-0">
                       {!isMe && showAvatar && (
                         <Avatar className="h-7 w-7 border">
@@ -380,6 +457,13 @@ export const ChatWindow = () => {
                     </div>
 
                     <div className={cn("flex flex-col max-w-[70%]", isMe ? "items-end" : "items-start")}>
+                      {/* Sender name for group chats */}
+                      {showSenderName && (
+                        <span className="text-[10px] font-semibold text-primary/80 mb-0.5 px-1">
+                          {senderObj?.name || "Unknown"}
+                        </span>
+                      )}
+
                       <div
                         className={cn(
                           "relative group/msg px-3.5 py-2 rounded-2xl text-sm shadow-sm select-text",
@@ -419,7 +503,7 @@ export const ChatWindow = () => {
 
       {/* ═══════════════ INPUT ═══════════════ */}
       <div className="px-4 py-3 border-t shrink-0 bg-background">
-        {blocked ? (
+        {!isGroup && blocked ? (
           <div className="text-sm text-muted-foreground text-center py-2 flex items-center justify-center gap-2">
             <Ban className="h-4 w-4" />
             Cannot message a blocked user
@@ -440,7 +524,7 @@ export const ChatWindow = () => {
               onChange={handleInput}
               onKeyDown={handleKeyDown}
               onBlur={stopTyping}
-              placeholder="Message…"
+              placeholder={isGroup ? `Message ${selectedChat.chatName || "group"}…` : "Message…"}
               className="flex-1 border-0 bg-transparent h-8 focus-visible:ring-0 focus-visible:ring-offset-0 px-1 text-sm placeholder:text-muted-foreground/60"
             />
 

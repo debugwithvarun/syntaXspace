@@ -51,7 +51,7 @@ const Login = () => {
         setUsername(userInfo.username)
         setEmail(userInfo.email)
         setName(userInfo.name)
-        setProfilePic(`http://16.171.197.228:8000${userInfo.profilepic}`)
+        setProfilePic(`http://localhost:8000${userInfo.profilepic}`)
         setIsAuth(true);
       } else {
         const code = await res.json();

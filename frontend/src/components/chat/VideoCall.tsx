@@ -11,6 +11,8 @@ import {
   PhoneIncoming,
   Volume2,
   VolumeX,
+  Monitor,
+  MonitorOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ImagePath from "@/lib/ImagePath";
@@ -25,6 +27,9 @@ export const VideoCall = () => {
     acceptCall,
     rejectCall,
     endCall,
+    isScreenSharing,
+    startScreenShare,
+    stopScreenShare,
   } = useChat();
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -36,10 +41,6 @@ export const VideoCall = () => {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /* ─── Attach local stream ───────────────────────────────────────── */
-  // CRITICAL FIX: Include callState in deps so srcObject is set AFTER
-  // the active UI mounts (video element exists). ontrack can fire while
-  // callState is still "calling" — when it flips to "active" the element
-  // mounts fresh, so we re-run to attach.
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
@@ -53,7 +54,6 @@ export const VideoCall = () => {
     }
   }, [remoteStream]);
 
-  // Run whenever stream changes OR callState changes to 'active'
   useEffect(() => {
     attachRemote();
   }, [attachRemote, callState]);
@@ -91,6 +91,14 @@ export const VideoCall = () => {
   const toggleSpeaker = () => {
     if (remoteVideoRef.current) remoteVideoRef.current.muted = !isSpeakerOff;
     setIsSpeakerOff((v) => !v);
+  };
+
+  const toggleScreenShare = async () => {
+    if (isScreenSharing) {
+      stopScreenShare();
+    } else {
+      await startScreenShare();
+    }
   };
 
   if (callState === "idle") return null;
@@ -195,37 +203,89 @@ export const VideoCall = () => {
           <div className="absolute bottom-0 left-0 right-0 h-44 bg-gradient-to-t from-black/75 to-transparent" />
         </div>
 
-        {/* Timer */}
+        {/* Timer + Screen share indicator */}
         <div className="relative flex items-center justify-between px-5 pt-5 z-10">
           <div className="flex items-center gap-2 text-white">
             <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
             <span className="text-sm font-mono font-semibold">{fmtDuration(callDuration)}</span>
           </div>
-          <span className="text-white/50 text-xs">Video Call</span>
+          <div className="flex items-center gap-2">
+            {isScreenSharing && (
+              <div className="flex items-center gap-1.5 bg-green-500/20 text-green-400 text-xs font-semibold px-3 py-1 rounded-full border border-green-500/30">
+                <Monitor className="h-3 w-3" />
+                Sharing screen
+              </div>
+            )}
+            <span className="text-white/50 text-xs">Video Call</span>
+          </div>
         </div>
 
-        {/* Local PiP — bottom right */}
+        {/* Local PiP — top right */}
         <div className="absolute top-16 right-4 w-28 h-40 rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl z-10 cursor-pointer">
-          {isCamOff ? (
+          {isCamOff && !isScreenSharing ? (
             <div className="w-full h-full bg-slate-700 flex items-center justify-center">
               <VideoOff className="h-6 w-6 text-white/40" />
             </div>
           ) : (
             <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
           )}
+          {isScreenSharing && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+              <Monitor className="h-5 w-5 text-green-400" />
+            </div>
+          )}
         </div>
 
         {/* Controls */}
-        <div className="absolute bottom-10 left-0 right-0 flex items-center justify-center gap-5 z-10">
-          <ControlBtn active={!isMuted} onClick={toggleMic} activeIcon={<Mic className="h-5 w-5 text-white" />} inactiveIcon={<MicOff className="h-5 w-5 text-white" />} label={isMuted ? "Unmute" : "Mute"} />
-          <ControlBtn active={!isCamOff} onClick={toggleCam} activeIcon={<Video className="h-5 w-5 text-white" />} inactiveIcon={<VideoOff className="h-5 w-5 text-white" />} label={isCamOff ? "Camera on" : "Camera off"} />
+        <div className="absolute bottom-10 left-0 right-0 flex items-center justify-center gap-4 z-10">
+          <ControlBtn
+            active={!isMuted}
+            onClick={toggleMic}
+            activeIcon={<Mic className="h-5 w-5 text-white" />}
+            inactiveIcon={<MicOff className="h-5 w-5 text-white" />}
+            label={isMuted ? "Unmute" : "Mute"}
+          />
+          <ControlBtn
+            active={!isCamOff}
+            onClick={toggleCam}
+            activeIcon={<Video className="h-5 w-5 text-white" />}
+            inactiveIcon={<VideoOff className="h-5 w-5 text-white" />}
+            label={isCamOff ? "Cam on" : "Cam off"}
+          />
+
+          {/* Screen Share button */}
+          <div className="flex flex-col items-center gap-1">
+            <button
+              onClick={toggleScreenShare}
+              className={cn(
+                "h-12 w-12 rounded-full flex items-center justify-center border shadow-lg transition-all active:scale-95",
+                isScreenSharing
+                  ? "bg-green-500 hover:bg-green-600 border-green-400/30"
+                  : "bg-white/10 hover:bg-white/20 border-white/10 backdrop-blur"
+              )}
+            >
+              {isScreenSharing
+                ? <MonitorOff className="h-5 w-5 text-white" />
+                : <Monitor className="h-5 w-5 text-white" />}
+            </button>
+            <span className="text-[10px] text-white/60">{isScreenSharing ? "Stop share" : "Share screen"}</span>
+          </div>
+
+          {/* End call */}
           <div className="flex flex-col items-center gap-1">
             <button onClick={endCall} className="h-16 w-16 rounded-full bg-destructive hover:bg-destructive/90 flex items-center justify-center shadow-xl transition-transform active:scale-95">
               <PhoneOff className="h-7 w-7 text-white" />
             </button>
             <span className="text-[10px] text-white/60">End</span>
           </div>
-          <ControlBtn active={!isSpeakerOff} onClick={toggleSpeaker} activeIcon={<Volume2 className="h-5 w-5 text-white" />} inactiveIcon={<VolumeX className="h-5 w-5 text-white" />} label={isSpeakerOff ? "Speaker on" : "Speaker off"} />
+
+          <ControlBtn
+            active={!isSpeakerOff}
+            onClick={toggleSpeaker}
+            activeIcon={<Volume2 className="h-5 w-5 text-white" />}
+            inactiveIcon={<VolumeX className="h-5 w-5 text-white" />}
+            label={isSpeakerOff ? "Speaker on" : "Speaker off"}
+          />
         </div>
       </div>
     );
@@ -261,14 +321,26 @@ export const VideoCall = () => {
 
         {/* Controls */}
         <div className="flex items-center gap-5">
-          <ControlBtn active={!isMuted} onClick={toggleMic} activeIcon={<Mic className="h-5 w-5 text-white" />} inactiveIcon={<MicOff className="h-5 w-5 text-white" />} label={isMuted ? "Unmute" : "Mute"} />
+          <ControlBtn
+            active={!isMuted}
+            onClick={toggleMic}
+            activeIcon={<Mic className="h-5 w-5 text-white" />}
+            inactiveIcon={<MicOff className="h-5 w-5 text-white" />}
+            label={isMuted ? "Unmute" : "Mute"}
+          />
           <div className="flex flex-col items-center gap-1">
             <button onClick={endCall} className="h-16 w-16 rounded-full bg-destructive hover:bg-destructive/90 flex items-center justify-center shadow-xl transition-transform active:scale-95">
               <PhoneOff className="h-7 w-7 text-white" />
             </button>
             <span className="text-[10px] text-white/60">End</span>
           </div>
-          <ControlBtn active={!isSpeakerOff} onClick={toggleSpeaker} activeIcon={<Volume2 className="h-5 w-5 text-white" />} inactiveIcon={<VolumeX className="h-5 w-5 text-white" />} label={isSpeakerOff ? "Speaker on" : "Speaker off"} />
+          <ControlBtn
+            active={!isSpeakerOff}
+            onClick={toggleSpeaker}
+            activeIcon={<Volume2 className="h-5 w-5 text-white" />}
+            inactiveIcon={<VolumeX className="h-5 w-5 text-white" />}
+            label={isSpeakerOff ? "Speaker on" : "Speaker off"}
+          />
         </div>
       </div>
     );

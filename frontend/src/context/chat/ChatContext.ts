@@ -124,6 +124,15 @@ type ChatContextProps = {
   acceptCall: () => Promise<void>;
   rejectCall: () => void;
   endCall: () => void;
+
+  // Screen Share
+  isScreenSharing: boolean;
+  startScreenShare: () => Promise<void>;
+  stopScreenShare: () => void;
+
+  // Group Chat
+  createGroup: (name: string, memberIds: string[]) => Promise<void>;
+  leaveGroup: (chatId: string) => Promise<void>;
 };
 
 const ChatContext = createContext<ChatContextProps | null>(null);

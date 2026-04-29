@@ -39,10 +39,12 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const [incomingCall, setIncomingCall] = useState<IncomingCallInfo | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
 
   const selectedChatRef = useRef<Chat | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const screenStreamRef = useRef<MediaStream | null>(null);
   const callTargetIdRef = useRef<string | null>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -514,6 +516,89 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     cleanupCall();
   };
 
+  /* ─── SCREEN SHARING ─── */
+  // stopScreenShare declared FIRST so startScreenShare can reference it safely
+  const stopScreenShare = useCallback(() => {
+    if (!peerConnectionRef.current || !screenStreamRef.current) return;
+    screenStreamRef.current.getTracks().forEach((t) => t.stop());
+    screenStreamRef.current = null;
+
+    // Restore original camera track in peer connection
+    const cameraTrack = localStreamRef.current?.getVideoTracks()[0];
+    if (cameraTrack) {
+      const senders = peerConnectionRef.current.getSenders();
+      const videoSender = senders.find((s) => s.track?.kind === "video");
+      if (videoSender) videoSender.replaceTrack(cameraTrack);
+    }
+    setIsScreenSharing(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep a stable ref so the async onended callback always sees the latest version
+  const stopScreenShareRef = useRef(stopScreenShare);
+  useEffect(() => { stopScreenShareRef.current = stopScreenShare; }, [stopScreenShare]);
+
+  const startScreenShare = async () => {
+    if (!peerConnectionRef.current || callState !== "active") return;
+    try {
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      screenStreamRef.current = screenStream;
+      const screenTrack = screenStream.getVideoTracks()[0];
+
+      // Replace existing video track in the peer connection
+      const senders = peerConnectionRef.current.getSenders();
+      const videoSender = senders.find((s) => s.track?.kind === "video");
+      if (videoSender) await videoSender.replaceTrack(screenTrack);
+
+      // Update local stream preview
+      if (localStreamRef.current) {
+        localStreamRef.current.getVideoTracks().forEach((t) => localStreamRef.current?.removeTrack(t));
+        localStreamRef.current.addTrack(screenTrack);
+      }
+      setLocalStream(localStreamRef.current ? new MediaStream(localStreamRef.current.getTracks()) : screenStream);
+      setIsScreenSharing(true);
+
+      // When user stops sharing via browser controls
+      screenTrack.onended = () => stopScreenShareRef.current();
+    } catch (err) {
+      console.error("Screen share error:", err);
+    }
+  };
+
+
+  /* ─── GROUP CHAT ─── */
+  const createGroup = async (name: string, memberIds: string[]) => {
+    try {
+      const res = await apiFetch("/chat/group", {
+        method: "POST",
+        body: JSON.stringify({ name, members: memberIds }),
+      });
+      if (!res.ok) return;
+      const group: Chat = await res.json();
+      setChats((prev) => [group, ...prev]);
+      setSelectedChat(group);
+      setOpenChat(true);
+    } catch (err) {
+      console.error("Create group error:", err);
+    }
+  };
+
+  const leaveGroup = async (chatId: string) => {
+    try {
+      await apiFetch("/chat/group/remove-member", {
+        method: "PUT",
+        body: JSON.stringify({ chatId, userId: currentUserId }),
+      });
+      setChats((prev) => prev.filter((c) => c._id !== chatId));
+      if (selectedChat?._id === chatId) {
+        setSelectedChat(null);
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error("Leave group error:", err);
+    }
+  };
+
   return (
     <ChatContext.Provider
       value={{
@@ -552,6 +637,11 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         acceptCall,
         rejectCall,
         endCall,
+        isScreenSharing,
+        startScreenShare,
+        stopScreenShare,
+        createGroup,
+        leaveGroup,
       }}
     >
       {children}

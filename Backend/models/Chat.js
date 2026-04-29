@@ -15,6 +15,11 @@ const conversationSchema = new mongoose.Schema(
       },
     ],
 
+    groupAdmin: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
     latestMessage: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Message",

@@ -121,34 +121,37 @@ export const setupSocket = (server, app) => {
         );
         if (!conversation) return;
 
-        const otherParticipant = conversation.participants.find(
-          (p) => p._id.toString() !== senderId.toString()
-        );
+        const isGroup = conversation.isGroupChat;
 
-        // Block check
-        if (
-          otherParticipant?.block?.some(
-            (id) => id.toString() === senderId.toString()
-          )
-        ) {
-          socket.emit("message-blocked", {
-            message: "You are blocked by this user.",
-          });
+        // For 1:1 chats — check block status
+        const otherParticipant = !isGroup
+          ? conversation.participants.find((p) => p._id.toString() !== senderId.toString())
+          : null;
+
+        if (!isGroup && otherParticipant?.block?.some((id) => id.toString() === senderId.toString())) {
+          socket.emit("message-blocked", { message: "You are blocked by this user." });
           return;
         }
 
-        const recipientId = otherParticipant?._id.toString();
+        const recipientId = otherParticipant?._id?.toString() ?? null;
 
-        // Determine delivery/read status immediately
-        const recipientActive = activeChatMap.get(
-          [...(onlineUsers.get(recipientId) || [])]?.[0]
-        ) === conversationId;
+        // For group chats every participant except sender is a "recipient"
+        const recipientIds = isGroup
+          ? conversation.participants
+              .filter((p) => p._id.toString() !== senderId.toString())
+              .map((p) => p._id.toString())
+          : recipientId ? [recipientId] : [];
 
-        const deliveredTo = recipientId && isUserOnline(recipientId)
-          ? [recipientId]
-          : [];
+        // Delivery/read status
+        const onlineRecipients = recipientIds.filter((id) => isUserOnline(id));
+        const deliveredTo = onlineRecipients.length > 0 ? onlineRecipients : [];
 
-        const readBy = recipientActive ? [senderId, recipientId] : [senderId];
+        const activeRecipients = recipientIds.filter((id) => {
+          const socketIds = [...(onlineUsers.get(id) || [])];
+          return socketIds.some((sid) => activeChatMap.get(sid) === conversationId);
+        });
+
+        const readBy = [senderId, ...activeRecipients];
 
         // Create message
         const message = await Message.create({
@@ -166,10 +169,7 @@ export const setupSocket = (server, app) => {
         // Update conversation latest message
         const updatedConversation = await Conversation.findByIdAndUpdate(
           conversationId,
-          {
-            latestMessage: message._id,
-            lastMessageAt: new Date(),
-          },
+          { latestMessage: message._id, lastMessageAt: new Date() },
           { new: true }
         )
           .populate("participants", "-password -block")
@@ -178,47 +178,35 @@ export const setupSocket = (server, app) => {
             populate: { path: "sender", select: "name profilepic email username" },
           });
 
-        // Emit to all participants' personal rooms
+        // Emit to all participants
         updatedConversation.participants.forEach((user) => {
           io.to(user._id.toString()).emit("receive message", fullMessage);
           io.to(user._id.toString()).emit("conversation updated", updatedConversation);
         });
 
-        // ─── If recipient is NOT actively on this chat → send notification ───
-        if (recipientId && !recipientActive) {
-          const sender = await User.findById(senderId, "name username profilepic");
-          if (sender) {
-            // Avoid duplicate new_message notifications (upsert last one)
-            await Notification.deleteMany({
-              recipient: recipientId,
-              sender: senderId,
-              type: "new_message",
-            });
-
-            const notif = await Notification.create({
-              recipient: recipientId,
-              sender: senderId,
-              type: "new_message",
-              message: `${sender.name}: ${content.slice(0, 60)}${content.length > 60 ? "…" : ""}`,
-              link: `/chat`,
-            });
-            const populated = await notif.populate("sender", "name username profilepic");
-            io.to(recipientId).emit("new-notification", populated);
+        // ─── Notifications for offline recipients ───
+        for (const rid of recipientIds) {
+          const isActive = activeRecipients.includes(rid);
+          if (!isActive) {
+            const sender = await User.findById(senderId, "name username profilepic");
+            if (sender) {
+              await Notification.deleteMany({ recipient: rid, sender: senderId, type: "new_message" });
+              const notif = await Notification.create({
+                recipient: rid,
+                sender: senderId,
+                type: "new_message",
+                message: `${sender.name}: ${content.slice(0, 60)}${content.length > 60 ? "…" : ""}`,
+                link: `/chat`,
+              });
+              const populated = await notif.populate("sender", "name username profilepic");
+              io.to(rid).emit("new-notification", populated);
+            }
           }
         }
 
         // ─── Delivery receipt ───
-        // If recipient is online (even if not on this chat), mark as delivered
-        if (recipientId && isUserOnline(recipientId) && deliveredTo.length > 0) {
-          await Message.updateOne(
-            { _id: message._id },
-            { $addToSet: { deliveredTo: recipientId } }
-          );
-          // Notify sender that message was delivered
-          io.to(senderId).emit("message-delivered", {
-            messageId: message._id,
-            conversationId,
-          });
+        if (deliveredTo.length > 0) {
+          io.to(senderId).emit("message-delivered", { messageId: message._id, conversationId });
         }
 
       } catch (err) {
@@ -270,8 +258,8 @@ export const setupSocket = (server, app) => {
     /* ==========================================
        VIDEO CALL — WebRTC Signaling
     =========================================== */
-    socket.on("call-user", ({ targetUserId, offer, callerId, callerInfo }) => {
-      io.to(targetUserId).emit("incoming-call", { offer, callerId, callerInfo });
+    socket.on("call-user", ({ targetUserId, offer, callerId, callerInfo, callType }) => {
+      io.to(targetUserId).emit("incoming-call", { offer, callerId, callerInfo, callType });
     });
 
     socket.on("call-accepted", ({ callerId, answer }) => {
