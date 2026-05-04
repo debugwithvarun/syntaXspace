@@ -5,7 +5,7 @@ import usePop from '@/hooks/usePop';
 import { apiFetch } from '@/lib/api';
 
 const Login = () => {
-  const { isAuth, setIsAuth, setEmail, setName, setUsername,setProfilePic } = useAuth();
+  const { isAuth, setIsAuth, setEmail, setName, setUsername, setProfilePic, setUserId, setId } = useAuth();
   const {setMsg,setPopUp}=usePop()
   const navigate = useNavigate();
 
@@ -51,6 +51,8 @@ const Login = () => {
         setUsername(userInfo.username)
         setEmail(userInfo.email)
         setName(userInfo.name)
+        setUserId(userInfo._id || "")
+        setId(userInfo._id || "")
         setProfilePic(`http://localhost:8000${userInfo.profilepic}`)
         setIsAuth(true);
       } else {

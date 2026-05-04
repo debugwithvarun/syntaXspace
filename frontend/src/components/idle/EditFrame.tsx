@@ -8,6 +8,7 @@ import { Button } from "../ui/button";
 import PostDialog from "./PostDialog";
 import usePop from "@/hooks/usePop";
 import { apiFetch } from "@/lib/api";
+import useChat from "@/hooks/useChat";
 
 
 const EditFrame = () => {
@@ -37,6 +38,7 @@ const EditFrame = () => {
     } = useIdle()
 
     const {setMsg,setPopUp}=usePop()
+    const { socket } = useChat();
 
     useEffect(() => {
         if (!id) return
@@ -81,6 +83,34 @@ const EditFrame = () => {
 
         return () => controller.abort()
     }, [id, setCode, setLanguageId, setStdin, setStdout, setStderr, setOpenEdit, setLanguage,setDesc,setTitle])
+
+    useEffect(() => {
+        if (!socket || !id) return;
+        const onPostUpdated = async ({ postId }: { postId?: string }) => {
+            if (!postId || postId !== id) return;
+            try {
+                const res = await apiFetch(`/syntaxspace/idle-get?id=${id}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                const postData = data?.data;
+                if (!postData) return;
+                setTitle(postData.title || "");
+                setDesc(postData.description || "");
+                setCode(postData.code || "");
+                setLanguageId(Number(postData.languageId));
+                setStdin(postData.stdin || "");
+                setStdout(postData.stdOut || "");
+                setStderr(postData.stderr || "");
+                setLanguage(postData.language || "");
+            } catch (error) {
+                console.error("Realtime edit refresh failed:", error);
+            }
+        };
+        socket.on("post-updated", onPostUpdated);
+        return () => {
+            socket.off("post-updated", onPostUpdated);
+        };
+    }, [socket, id, setTitle, setDesc, setCode, setLanguageId, setStdin, setStdout, setStderr, setLanguage])
 
 
     const handleOnEdit = async () => {

@@ -1,5 +1,5 @@
 
-import { useState } from "react"
+import { useMemo } from "react"
 import { ChevronDownIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -16,13 +16,25 @@ import { useIdle } from "@/hooks/useIdle"
 
 
 export default function LanguageButton() {
-  const {setLanguage,setLanguageId} =useIdle()
-  const [selectedIndex, setSelectedIndex] = useState("2")
+  const {
+    language,
+    setLanguage,
+    setLanguageId,
+    setPostAllow,
+    setStdout,
+    setStderr,
+    setExecuteTime,
+  } = useIdle()
+
+  const selectedIndex = useMemo(() => {
+    const idx = languageOptions.findIndex((option) => option.id === language)
+    return String(idx >= 0 ? idx : 0)
+  }, [language])
 
   return (
     <div className="inline-flex divide-x divide-primary-foreground/30 rounded-md shadow-xs rtl:space-x-reverse">
       <Button className="rounded-none shadow-none first:rounded-s-md last:rounded-e-md focus-visible:z-10">
-        {languageOptions[Number(selectedIndex)].name}
+        {languageOptions[Number(selectedIndex)]?.name || "Language"}
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -36,21 +48,27 @@ export default function LanguageButton() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          className="max-w-64 md:max-w-xs max-h-[400px z-600 ml-10 overflow-auto scrollbar-none"
+          className="max-w-64 md:max-w-xs max-h-[400px] z-[600] ml-10 overflow-auto scrollbar-none"
           side="bottom"
           sideOffset={4}
           align="end"
         >
           <DropdownMenuRadioGroup
             value={selectedIndex}
-            onValueChange={setSelectedIndex}
+            onValueChange={(value) => {
+              const option = languageOptions[Number(value)]
+              if (!option) return
+              setLanguage(option.id)
+              setLanguageId(option.judge0)
+              // Language change means old output is stale for the new compiler runtime.
+              setPostAllow(false)
+              setStdout("")
+              setStderr("")
+              setExecuteTime("0")
+            }}
           >
             {languageOptions.map((option, index) => (
               <DropdownMenuRadioItem
-              onClick={()=>{
-                setLanguage(option.id)
-                setLanguageId(option.judge0)
-              }}
                 key={option.id}
                 value={String(index)}
                 className="items-start  [&>span]:pt-1.5"

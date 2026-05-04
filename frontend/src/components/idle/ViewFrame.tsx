@@ -5,6 +5,7 @@ import { useIdle } from "@/hooks/useIdle";
 import { CodeBox } from "./CodeBox";
 import { useEffect } from "react";
 import { apiFetch } from "@/lib/api";
+import useChat from "@/hooks/useChat";
 
 
 const ViewFrame = () => {
@@ -20,6 +21,7 @@ const ViewFrame = () => {
     setLanguage
 
   } = useIdle()
+  const { socket } = useChat();
 
   useEffect(() => {
     if (!id) return
@@ -64,6 +66,32 @@ const ViewFrame = () => {
 
     return () => controller.abort()
   }, [id, setCode, setLanguageId, setStdin, setStdout, setStderr, setOpenView, setLanguage])
+
+  useEffect(() => {
+    if (!socket || !id) return;
+    const onPostUpdated = async ({ postId }: { postId?: string }) => {
+      if (!postId || postId !== id) return;
+      try {
+        const res = await apiFetch(`/syntaxspace/idle-get?id=${id}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const postData = data?.data;
+        if (!postData) return;
+        setCode(postData.code || "");
+        setLanguageId(Number(postData.languageId));
+        setStdin(postData.stdin || "");
+        setStdout(postData.stdOut || "");
+        setStderr(postData.stderr || "");
+        setLanguage(postData.language || "");
+      } catch (error) {
+        console.error("Realtime refresh failed:", error);
+      }
+    };
+    socket.on("post-updated", onPostUpdated);
+    return () => {
+      socket.off("post-updated", onPostUpdated);
+    };
+  }, [socket, id, setCode, setLanguageId, setStdin, setStdout, setStderr, setLanguage]);
 
  
 

@@ -53,7 +53,10 @@ export const setupSocket = (server, app) => {
     }
   });
 
-  // Attach io to express app so routes can emit notifications
+  // Attach io to express app so routes can emit realtime updates
+  app.set("io", io);
+
+  // Keep middleware as a convenience for handlers mounted after this
   app.use((req, _res, next) => {
     req.io = io;
     next();
@@ -166,10 +169,31 @@ export const setupSocket = (server, app) => {
           .populate("sender", "name profilepic username email")
           .populate("conversation");
 
-        // Update conversation latest message
+        // Update conversation latest message + unread counts
+        const unreadInc = {};
+        recipientIds.forEach((rid) => {
+          if (!activeRecipients.includes(rid)) {
+            unreadInc[`unreadCounts.${rid}`] = 1;
+          }
+        });
+
+        const unreadReset = {
+          latestMessage: message._id,
+          lastMessageAt: new Date(),
+          [`unreadCounts.${senderId}`]: 0,
+        };
+        activeRecipients.forEach((rid) => {
+          unreadReset[`unreadCounts.${rid}`] = 0;
+        });
+
+        const updatePayload = {
+          ...(Object.keys(unreadInc).length ? { $inc: unreadInc } : {}),
+          $set: unreadReset,
+        };
+
         const updatedConversation = await Conversation.findByIdAndUpdate(
           conversationId,
-          { latestMessage: message._id, lastMessageAt: new Date() },
+          updatePayload,
           { new: true }
         )
           .populate("participants", "-password -block")
@@ -314,7 +338,16 @@ async function markMessagesAsRead(io, userId, conversationId) {
 
     if (updated.modifiedCount > 0) {
       // Notify the sender(s) that their messages were read
-      const conversation = await Conversation.findById(conversationId);
+      const conversation = await Conversation.findByIdAndUpdate(
+        conversationId,
+        { $set: { [`unreadCounts.${userId}`]: 0 } },
+        { new: true }
+      )
+        .populate("participants", "-password -block")
+        .populate({
+          path: "latestMessage",
+          populate: { path: "sender", select: "name profilepic email username" },
+        });
       if (!conversation) return;
 
       conversation.participants.forEach((participantId) => {
@@ -324,6 +357,7 @@ async function markMessagesAsRead(io, userId, conversationId) {
             readBy: userId,
           });
         }
+        io.to(participantId.toString()).emit("conversation updated", conversation);
       });
     }
   } catch (err) {

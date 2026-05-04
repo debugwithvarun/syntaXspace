@@ -12,7 +12,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { BACKEND, apiFetch } from "@/lib/api";
 
 const ChatProvider = ({ children }: { children: React.ReactNode }) => {
-  const { _id: currentUserId } = useAuth();
+  const { _id, userId } = useAuth();
+  const currentUserId = _id || userId;
 
   const [socket, setSocket] = useState<Socket | null>(null);
   const [openChat, setOpenChat] = useState(false);

@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   Ban,
   Check,
   CheckCheck,
@@ -100,9 +101,11 @@ export const ChatWindow = () => {
     stopTyping,
     getMessageStatus,
     leaveGroup,
+    setSelectedChat,
   } = useChat();
 
-  const { _id: myId } = useAuth();
+  const { _id, userId } = useAuth();
+  const myId = _id || userId;
   const [inputText, setInputText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -204,8 +207,17 @@ export const ChatWindow = () => {
     <div className="flex flex-col h-full">
 
       {/* ═══════════════ HEADER ═══════════════ */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b shrink-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b shrink-0 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-full md:hidden text-muted-foreground"
+            onClick={() => setSelectedChat(null)}
+            title="Back to chats"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
           <div className="relative">
             {isGroup ? (
               <div className="h-10 w-10 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center shadow">
@@ -397,7 +409,7 @@ export const ChatWindow = () => {
       )}
 
       {/* ═══════════════ MESSAGES ═══════════════ */}
-      <ScrollArea className="flex-1 min-h-0 bg-[radial-gradient(ellipse_at_top_left,hsl(var(--primary)/0.04)_0%,transparent_60%)]">
+      <ScrollArea className="flex-1 min-h-0 bg-background">
         <div className="flex flex-col gap-1 px-4 py-4 max-w-3xl mx-auto w-full">
 
           {messageGroups.length === 0 && (
@@ -466,10 +478,10 @@ export const ChatWindow = () => {
 
                       <div
                         className={cn(
-                          "relative group/msg px-3.5 py-2 rounded-2xl text-sm shadow-sm select-text",
+                          "relative group/msg px-3.5 py-2 rounded-2xl text-sm border select-text",
                           isMe
-                            ? "bg-primary text-primary-foreground rounded-br-sm"
-                            : "bg-card border border-border/60 rounded-bl-sm"
+                            ? "bg-primary/90 text-primary-foreground border-primary/40 rounded-br-sm"
+                            : "bg-muted/40 border-border/50 rounded-bl-sm"
                         )}
                       >
                         {msg.content}
@@ -502,14 +514,14 @@ export const ChatWindow = () => {
       </ScrollArea>
 
       {/* ═══════════════ INPUT ═══════════════ */}
-      <div className="px-4 py-3 border-t shrink-0 bg-background">
+      <div className="px-4 py-3 border-t shrink-0 bg-background/95">
         {!isGroup && blocked ? (
           <div className="text-sm text-muted-foreground text-center py-2 flex items-center justify-center gap-2">
             <Ban className="h-4 w-4" />
             Cannot message a blocked user
           </div>
         ) : (
-          <div className="flex items-center gap-2 bg-muted/40 border border-border/50 rounded-2xl px-3 py-1.5 shadow-sm">
+          <div className="flex items-center gap-2 bg-muted/25 border border-border/50 rounded-2xl px-3 py-1.5">
             <Button
               variant="ghost"
               size="icon"

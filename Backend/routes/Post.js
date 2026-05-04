@@ -16,6 +16,15 @@ const judgeapihost = process.env.JUDGEAPIHOST;
 const toBase64 = (s = "") => Buffer.from(s, "utf8").toString("base64");
 const fromBase64 = (b = "") => Buffer.from(b, "base64").toString("utf8");
 
+const emitRealtimePostUpdate = (req, postId) => {
+  const io = req.io || req.app.get("io");
+  if (!io) return;
+  io.emit("feed-updated");
+  if (postId) {
+    io.emit("post-updated", { postId: postId.toString() });
+  }
+};
+
 // ======================= RUN CODE ==========================
 PostRouter.route("/run-code").post(async (req, res) => {
   try {
@@ -161,6 +170,7 @@ PostRouter.route("/save-post").post(async (req, res) => {
       }
     }
 
+    emitRealtimePostUpdate(req, savedPost._id);
     return res.status(200).json({ msg: "Code Post Successfull" });
   } catch (error) {
     console.log(error);
@@ -194,7 +204,7 @@ PostRouter.route("/edit-post").post(async (req, res) => {
       return res.status(400).json({ msg: "Post Not Found" });
     }
 
-    await Post.findByIdAndUpdate(
+    const updatedPost = await Post.findByIdAndUpdate(
       postId,
       {
         code,
@@ -211,6 +221,7 @@ PostRouter.route("/edit-post").post(async (req, res) => {
       { new: false }
     );
 
+    emitRealtimePostUpdate(req, updatedPost?._id || postId);
     return res.status(200).json({ msg: "Code Edit Successfull" });
   } catch (error) {
     console.log(error);
@@ -514,6 +525,7 @@ PostRouter.route("/delete-post/:postId").delete(async (req, res) => {
       { $pull: { feeds: postId } }
     );
 
+    emitRealtimePostUpdate(req, postId);
     return res.status(200).json({
       success: true,
       msg: "Post deleted successfully",
@@ -552,6 +564,7 @@ PostRouter.route("/add-comment").post(async (req, res) => {
 
     const data = await post.save();
 
+    emitRealtimePostUpdate(req, postId);
     return res.status(200).json({
       success: true,
       msg: "Comment added successfully",
@@ -593,6 +606,7 @@ PostRouter.route("/add-reply").post(async (req, res) => {
 
     await post.save();
 
+    emitRealtimePostUpdate(req, postId);
     return res.status(200).json({
       success: true,
       msg: "Reply added successfully",
@@ -650,6 +664,7 @@ PostRouter.route("/comment-like").post(async (req, res) => {
 
     await post.save();
 
+    emitRealtimePostUpdate(req, postId);
     return res.status(200).json({
       success: true,
       msg: "Comment like status updated",
@@ -716,6 +731,7 @@ PostRouter.route("/reply-like").post(async (req, res) => {
 
     await post.save();
 
+    emitRealtimePostUpdate(req, postId);
     return res.status(200).json({
       success: true,
       msg: "Reply like status updated",
@@ -777,6 +793,7 @@ PostRouter.route("/delete-comment").delete(async (req, res) => {
     comment.deleteOne(); // remove subdocument
     await post.save();
 
+    emitRealtimePostUpdate(req, postId);
     return res.status(200).json({
       success: true,
       msg: "Comment deleted successfully",
@@ -844,6 +861,7 @@ PostRouter.route("/delete-reply").delete(async (req, res) => {
     reply.deleteOne(); // remove subdocument
     await post.save();
 
+    emitRealtimePostUpdate(req, postId);
     return res.status(200).json({
       success: true,
       msg: "Reply deleted successfully",

@@ -44,7 +44,7 @@
       }, []);
       // console.log(username,profilepic,name,_id,email,userId,postCount)
       return (
-        <AuthContext.Provider value={{ _id,isAuth, loading,setIsAuth,username,email,name,setEmail,setName,setUsername ,profilepic,setProfilePic, postCount, setPostCount,userId,setUserId}}>
+        <AuthContext.Provider value={{ _id,isAuth, loading,setIsAuth,username,email,name,setEmail,setName,setUsername ,profilepic,setProfilePic, postCount, setPostCount,userId,setUserId,setId}}>
           {children}
         </AuthContext.Provider>
       );

@@ -20,7 +20,8 @@ import {
 import { apiFetch } from "@/lib/api";
 
 export const ChatSidebar = () => {
-  const { profilepic, name, _id: myId } = useAuth();
+  const { profilepic, name, _id, userId } = useAuth();
+  const myId = _id || userId;
 
   const {
     chats,
@@ -139,10 +140,10 @@ export const ChatSidebar = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-background/95">
 
       {/* ─── HEADER ─── */}
-      <div className="px-4 py-3 border-b shrink-0 bg-background/95 backdrop-blur">
+      <div className="px-4 py-3 border-b shrink-0 bg-background/85 backdrop-blur">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2.5">
             <div className="relative">
@@ -229,7 +230,7 @@ export const ChatSidebar = () => {
 
                   {/* Search results */}
                   {groupSearch && (
-                    <ScrollArea className="max-h-40 rounded-lg border bg-muted/20">
+                    <ScrollArea className="max-h-40 rounded-lg border bg-muted/10">
                       <div className="p-1">
                         {groupSearching ? (
                           <div className="flex justify-center py-3">
@@ -307,7 +308,7 @@ export const ChatSidebar = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search people…"
-            className="pl-9 pr-8 h-9 rounded-xl text-sm bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/30"
+            className="pl-9 pr-8 h-9 rounded-xl text-sm bg-muted/30 border border-border/50 focus-visible:ring-1 focus-visible:ring-primary/30"
           />
           {searchTerm && (
             <button
