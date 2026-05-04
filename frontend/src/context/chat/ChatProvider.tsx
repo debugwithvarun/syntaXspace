@@ -458,6 +458,11 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     type: "video" | "audio" = "video"
   ) => {
     if (!socket || !currentUserId) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.error("Initiate call error: Camera/microphone access requires a secure (HTTPS) connection.");
+      alert("Video/audio calls require a secure connection (HTTPS). Please access the site over HTTPS.");
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia(
         type === "video" ? { video: true, audio: true } : { video: false, audio: true }
@@ -481,6 +486,12 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const acceptCall = async () => {
     if (!socket || !incomingCall) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.error("Accept call error: Camera/microphone access requires a secure (HTTPS) connection.");
+      alert("Video/audio calls require a secure connection (HTTPS). Please access the site over HTTPS.");
+      rejectCall();
+      return;
+    }
     try {
       const type = incomingCall.callType || "video";
       const stream = await navigator.mediaDevices.getUserMedia(

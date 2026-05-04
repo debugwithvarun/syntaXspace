@@ -11,7 +11,8 @@
 // Hard fallback keeps it working if the env file is missing.
 // -------------------------------------------------------------------
 export const BACKEND: string =
-  import.meta.env.VITE_API_URL ?? "http://16.171.197.228:8000";
+  // import.meta.env.VITE_API_URL ?? "http://16.171.197.228:8000";
+  import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 // -------------------------------------------------------------------
 // Auth headers

@@ -5,6 +5,7 @@ import { useIdle } from "@/hooks/useIdle";
 import { useAuth } from "@/hooks/useAuth";
 import { handleLikeClick } from "@/lib/LikeFunction";
 import { handleCommentClick } from "@/lib/CommentFunction";
+import { apiFetch } from "@/lib/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import CommentSection from "@/components/postCard/CommentSection";
 import type { PostSummary } from "./MiddleSection";
@@ -42,8 +43,8 @@ const PostCard: React.FC<PostSummary> = ({
   useEffect(() => {
     const fetchComments = async () => {
       try {
-        const res = await fetch(
-          `/api/syntaxspace/get-comments/${_id}?username=${username}`,
+        const res = await apiFetch(
+          `/syntaxspace/get-comments/${_id}?username=${username}`
         );
         const { data } = await res.json();
         setComment(data);
