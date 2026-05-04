@@ -4,6 +4,7 @@ import {
     ResizablePanelGroup,
 } from "@/components/ui/resizable"
 import LanguageButton from "./LanguageButton"
+import CollabBar from "./CollabBar"
 
 
 import CodeEditor from "./CodeEditor"
@@ -21,6 +22,7 @@ export function CodeBox() {
             <ResizablePanel defaultSize={65} className="p-2 flex flex-col gap-4" minSize={30}>
 
                 {!openView && <LanguageButton />}
+                {!openView && <CollabBar />}
 
                 <CodeEditor/>
 

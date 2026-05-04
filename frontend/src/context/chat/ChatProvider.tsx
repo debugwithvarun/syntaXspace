@@ -359,6 +359,15 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
+  const sendMessageToConversation = (conversationId: string, content: string) => {
+    if (!socket || !conversationId || !content.trim()) return;
+    socket.emit("send message", {
+      content: content.trim(),
+      conversationId,
+      senderId: currentUserId,
+    });
+  };
+
   /* ─── TYPING ─── */
   const startTyping = useCallback(() => {
     if (!socket || !selectedChat) return;
@@ -621,6 +630,7 @@ const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         messages,
         accessChat,
         sendMessage,
+        sendMessageToConversation,
         fetchChats,
         openChat,
         setOpenChat,

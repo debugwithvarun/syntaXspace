@@ -13,6 +13,7 @@ const onlineUsers = new Map(); // userId → Set<socketId>
 /* Track which chat a socket is currently viewing
    socketId → conversationId */
 const activeChatMap = new Map();
+const collabSessions = new Map(); // sessionId -> { state: {}, participants: Map<socketId, userInfo> }
 
 const addOnlineUser = (userId, socketId) => {
   if (!onlineUsers.has(userId)) onlineUsers.set(userId, new Set());
@@ -27,6 +28,16 @@ const removeOnlineUser = (userId, socketId) => {
 };
 
 const isUserOnline = (userId) => onlineUsers.has(userId);
+
+const getOrCreateCollabSession = (sessionId) => {
+  if (!collabSessions.has(sessionId)) {
+    collabSessions.set(sessionId, {
+      state: {},
+      participants: new Map(),
+    });
+  }
+  return collabSessions.get(sessionId);
+};
 
 export const setupSocket = (server, app) => {
   const io = new Server(server, {
@@ -302,11 +313,81 @@ export const setupSocket = (server, app) => {
       io.to(targetUserId).emit("call-ended");
     });
 
+    /* ==========================================
+       COLLAB IDE — realtime shared editor
+    =========================================== */
+    socket.on("collab-join", ({ sessionId, user }) => {
+      if (!sessionId) return;
+      socket.join(sessionId);
+      socket.collabSessionId = sessionId;
+
+      const session = getOrCreateCollabSession(sessionId);
+      session.participants.set(socket.id, {
+        _id: user?._id || socket.userId,
+        name: user?.name || "Collaborator",
+        username: user?.username || "",
+      });
+
+      io.to(sessionId).emit("collab-users", {
+        sessionId,
+        users: [...session.participants.values()],
+      });
+
+      if (session.state && Object.keys(session.state).length > 0) {
+        socket.emit("collab-state", {
+          sessionId,
+          state: session.state,
+        });
+      }
+    });
+
+    socket.on("collab-sync", ({ sessionId, patch }) => {
+      if (!sessionId || !patch) return;
+      const session = getOrCreateCollabSession(sessionId);
+      session.state = { ...session.state, ...patch, updatedAt: new Date().toISOString() };
+      socket.to(sessionId).emit("collab-state", {
+        sessionId,
+        state: session.state,
+      });
+    });
+
+    socket.on("collab-leave", ({ sessionId }) => {
+      const sid = sessionId || socket.collabSessionId;
+      if (!sid) return;
+      socket.leave(sid);
+      socket.collabSessionId = null;
+      const session = collabSessions.get(sid);
+      if (!session) return;
+      session.participants.delete(socket.id);
+      if (session.participants.size === 0) {
+        collabSessions.delete(sid);
+        return;
+      }
+      io.to(sid).emit("collab-users", {
+        sessionId: sid,
+        users: [...session.participants.values()],
+      });
+    });
+
     /* =========================================
        DISCONNECT
     ========================================= */
     socket.on("disconnect", () => {
       activeChatMap.delete(socket.id);
+      if (socket.collabSessionId) {
+        const session = collabSessions.get(socket.collabSessionId);
+        if (session) {
+          session.participants.delete(socket.id);
+          if (session.participants.size === 0) {
+            collabSessions.delete(socket.collabSessionId);
+          } else {
+            io.to(socket.collabSessionId).emit("collab-users", {
+              sessionId: socket.collabSessionId,
+              users: [...session.participants.values()],
+            });
+          }
+        }
+      }
       if (socket.userId) {
         removeOnlineUser(socket.userId, socket.id);
         if (!isUserOnline(socket.userId)) {

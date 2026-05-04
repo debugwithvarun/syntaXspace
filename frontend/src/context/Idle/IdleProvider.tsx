@@ -17,6 +17,9 @@ const IdleProvider = ({ children }: { children: React.ReactNode }) => {
     const [title, setTitle] = useState("")
     const [desc, setDesc] = useState("")
     const [openEdit, setOpenEdit] = useState(false)
+    const [collabSessionId, setCollabSessionId] = useState("")
+    const [collabUsers, setCollabUsers] = useState<{ _id: string; name: string; username?: string }[]>([])
+    const [isCollabConnected, setIsCollabConnected] = useState(false)
 
     useEffect(() => {
         const matched = languageOptions.find((option) => option.id === language);
@@ -26,7 +29,7 @@ const IdleProvider = ({ children }: { children: React.ReactNode }) => {
     }, [language, languageId]);
 
     return (
-        <IdleContext.Provider value={{ open, language, code, setCode, setLanguage, setOpen, stdin, setStdin, languageId, setLanguageId, stderr, setStderr, stdout, setStdout, postallow, setPostAllow, executeTime, setExecuteTime, title, setTitle, desc, setDesc,openView, setOpenView,id,setId, openEdit, setOpenEdit}}>
+        <IdleContext.Provider value={{ open, language, code, setCode, setLanguage, setOpen, stdin, setStdin, languageId, setLanguageId, stderr, setStderr, stdout, setStdout, postallow, setPostAllow, executeTime, setExecuteTime, title, setTitle, desc, setDesc,openView, setOpenView,id,setId, openEdit, setOpenEdit, collabSessionId, setCollabSessionId, collabUsers, setCollabUsers, isCollabConnected, setIsCollabConnected }}>
             {children}
         </IdleContext.Provider>
     )

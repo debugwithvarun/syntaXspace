@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom"
+import { Route, Routes, useLocation } from "react-router-dom"
 import Authentication from "./Pages/Authentication"
 import PrivateRoute from "./Routes/PrivateRoute"
 
@@ -19,12 +19,23 @@ import CommunityDashbaord from "./Pages/CommunityDashboard"
 import ChatDashbaord from "./Pages/ChatDashbaord"
 import useChat from "./hooks/useChat"
 import { VideoCall } from "./components/chat/VideoCall"
+import { useEffect } from "react"
 
 
 const App = () => {
   const { popUp, msg } = usePop()
-  const { open, openView, openEdit } = useIdle()
+  const { open, openView, openEdit, setId, setOpenView } = useIdle()
   const {openChat}=useChat()
+  const location = useLocation()
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const postId = params.get("post")
+    if (postId) {
+      setId(postId)
+      setOpenView(true)
+    }
+  }, [location.search, setId, setOpenView])
 
   return (
     <>

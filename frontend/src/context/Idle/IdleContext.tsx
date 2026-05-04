@@ -42,6 +42,13 @@ interface IdleContextType{
 
     desc:string,
     setDesc:React.Dispatch<React.SetStateAction<string>>,
+
+    collabSessionId: string,
+    setCollabSessionId: React.Dispatch<React.SetStateAction<string>>,
+    collabUsers: { _id: string; name: string; username?: string }[],
+    setCollabUsers: React.Dispatch<React.SetStateAction<{ _id: string; name: string; username?: string }[]>>,
+    isCollabConnected: boolean,
+    setIsCollabConnected: React.Dispatch<React.SetStateAction<boolean>>,
     
 }
 

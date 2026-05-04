@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Heart, MessageCircle } from "lucide-react";
+import { Heart, MessageCircle, Link2, Send } from "lucide-react";
 import { useIdle } from "@/hooks/useIdle";
 import { useAuth } from "@/hooks/useAuth";
 import { handleLikeClick } from "@/lib/LikeFunction";
@@ -11,6 +11,8 @@ import CommentSection from "@/components/postCard/CommentSection";
 import type { PostSummary } from "./MiddleSection";
 import ImagePath from "@/lib/ImagePath";
 import { Link } from "react-router-dom";
+import useChat from "@/hooks/useChat";
+import usePop from "@/hooks/usePop";
 
 const PostCard: React.FC<PostSummary> = ({
   _id,
@@ -27,6 +29,8 @@ const PostCard: React.FC<PostSummary> = ({
 }) => {
   const { setOpenView, setId } = useIdle();
   const { name, username: Authuser } = useAuth();
+  const { selectedChat, sendMessageToConversation, setOpenChat } = useChat();
+  const { setMsg, setPopUp } = usePop();
 
   const [liked, setLiked] = useState<string[]>(likes);
   const [likeCount, setLikeCount] = useState<number>(likes_count ?? 0);
@@ -81,6 +85,33 @@ const PostCard: React.FC<PostSummary> = ({
     const others = likeCount - 1;
     return `You & ${others} other${others > 1 ? "s" : ""}`;
   }, [isLiked, likeCount]);
+
+  const shareLink = `${window.location.origin}/community/${username}?post=${_id}`;
+
+  const handleCopyLink = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      setMsg("Post link copied");
+      setPopUp("ds");
+    } catch {
+      setMsg("Failed to copy link");
+      setPopUp("de");
+    }
+  };
+
+  const handleSendToChat = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!selectedChat?._id) {
+      setOpenChat(true);
+      setMsg("Select a chat first, then share");
+      setPopUp("dw");
+      return;
+    }
+    sendMessageToConversation(selectedChat._id, `Check this code post: ${shareLink}`);
+    setMsg("Post link sent in chat");
+    setPopUp("ds");
+  };
 
   return (
     <Card
@@ -224,6 +255,24 @@ const PostCard: React.FC<PostSummary> = ({
               >
                 <MessageCircle className="h-4 w-4" />
                 <span>{comment.length} Comment{comment.length >= 1 ? "s" : ""}</span>
+              </button>
+
+              <button
+                onClick={handleCopyLink}
+                className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-sm text-muted-foreground hover:bg-muted/70"
+                title="Copy post link"
+              >
+                <Link2 className="h-4 w-4" />
+                <span>Copy link</span>
+              </button>
+
+              <button
+                onClick={handleSendToChat}
+                className="inline-flex items-center gap-2 rounded-full px-2 py-1 text-sm text-muted-foreground hover:bg-muted/70"
+                title="Send in selected chat"
+              >
+                <Send className="h-4 w-4" />
+                <span>Send to chat</span>
               </button>
 
   

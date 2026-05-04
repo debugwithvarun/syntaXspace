@@ -87,6 +87,7 @@ type ChatContextProps = {
   accessChat: (userId: string) => Promise<void>;
   fetchChats: () => Promise<void>;
   sendMessage: (content: string) => void;
+  sendMessageToConversation: (conversationId: string, content: string) => void;
 
   // Delete
   deleteMessage: (messageId: string) => void;
