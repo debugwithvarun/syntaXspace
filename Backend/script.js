@@ -14,11 +14,12 @@ import Userrouter from "./routes/User.js";
 import Authrouter from "./routes/Auth.js";
 import Rcmdrouter from "./routes/Rcmd.js";
 import Networkrouter from "./routes/Network.js";
-import NewsRouter, { scheduleNewsFetching } from "./routes/News.js";
+import NewsRouter, { DirectNewsFetching, scheduleNewsFetching } from "./routes/News.js";
 import PostRouter from "./routes/Post.js";
 import { ProfileRouter } from "./routes/Profile.js";
 import chatRouter from "./routes/Chat.js";
 import NotificationRouter from "./routes/Notification.js";
+import { fetchTechNews } from "./Function/FetchNews.js";
 
 dotenv.config();
 
@@ -61,7 +62,7 @@ ConnectDb(process.env.DATABASE_URL);
 /* ============================
    ROUTES
 ============================ */
-
+// fetchTechNews()
 app.use("/", Userrouter);
 app.use("/", verifyToken, Authrouter);
 app.use("/", verifyToken, ProfileRouter);
@@ -92,5 +93,5 @@ server.listen(PORT, () => {
 /* ============================
    SCHEDULE JOBS
 ============================ */
-
+// DirectNewsFetching()
 scheduleNewsFetching();

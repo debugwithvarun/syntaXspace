@@ -6,7 +6,7 @@ import { fetchTechNews } from "../Function/FetchNews.js";
 
 export function scheduleNewsFetching() {
 
-    cron.schedule("30 11 * * *", async () => {
+    cron.schedule("40 11 * * *", async () => {
         console.log("🕚 Running scheduled fetch at 11:30 AM");
         const NewsData = await fetchTechNews();
         await News.deleteMany({})
